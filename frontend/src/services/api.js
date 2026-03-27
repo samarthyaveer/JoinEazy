@@ -11,6 +11,11 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
+      // Ignore 401s for the initial auth check
+      if (err.config?.url === '/auth/me') {
+        return Promise.reject(err);
+      }
+      
       // If on a protected page and token expired, redirect to login
       if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
         window.location.href = '/login';

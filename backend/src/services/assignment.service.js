@@ -12,22 +12,12 @@ async function createAssignment({ title, description, dueDate, onedriveLink, tar
 
     const result = await client.query(
       `INSERT INTO assignments (title, description, due_date, onedrive_link, target_type, max_group_size, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       VALUES ($1, $2, $3, $4, 'all', $5, $6)
        RETURNING *`,
-      [title, description, dueDate, onedriveLink, targetType, maxGroupSize || 4, createdBy]
+      [title, description, dueDate, onedriveLink, maxGroupSize || 4, createdBy]
     );
 
     const assignment = result.rows[0];
-
-    // If targeting specific groups, insert target records
-    if (targetType === 'specific' && groupIds && groupIds.length > 0) {
-      for (const groupId of groupIds) {
-        await client.query(
-          'INSERT INTO assignment_targets (assignment_id, group_id) VALUES ($1, $2)',
-          [assignment.id, groupId]
-        );
-      }
-    }
 
     await client.query('COMMIT');
     return assignment;
@@ -57,18 +47,13 @@ async function getAssignments(user) {
     return result.rows;
   }
 
-  // Student: show assignments targeted to 'all' OR to their groups
+  // Student: show all assignments
   const result = await query(
     `SELECT DISTINCT a.*,
             u.full_name AS creator_name
      FROM assignments a
      JOIN users u ON u.id = a.created_by
-     LEFT JOIN assignment_targets at ON a.id = at.assignment_id
-     LEFT JOIN group_members gm ON at.group_id = gm.group_id
-     WHERE a.target_type = 'all'
-        OR (a.target_type = 'specific' AND gm.user_id = $1)
-     ORDER BY a.due_date ASC`,
-    [user.id]
+     ORDER BY a.due_date ASC`
   );
   return result.rows;
 }
@@ -102,7 +87,11 @@ async function getAssignmentById(assignmentId, user) {
   // If student, get their submission status
   if (user.role === 'student') {
     const subResult = await query(
-      `SELECT s.* FROM submissions s
+      `SELECT s.*, 
+              gm.submission_status AS my_submission_status,
+              gm.evaluation_status AS my_evaluation_status,
+              gm.feedback AS my_feedback
+       FROM submissions s
        JOIN group_members gm ON gm.group_id = s.group_id
        WHERE s.assignment_id = $1 AND gm.user_id = $2
        LIMIT 1`,
@@ -119,6 +108,18 @@ async function getAssignmentById(assignmentId, user) {
       [assignmentId, user.id]
     );
     assignment.my_group = myGroupResult.rows[0] || null;
+
+    if (assignment.my_group) {
+      const membersResult = await query(
+        `SELECT gm.user_id, u.full_name, u.email, gm.role, gm.submission_status, gm.evaluation_status, gm.feedback
+         FROM group_members gm
+         JOIN users u ON u.id = gm.user_id
+         WHERE gm.group_id = $1
+         ORDER BY gm.joined_at ASC`,
+        [assignment.my_group.id]
+      );
+      assignment.my_group_members = membersResult.rows;
+    }
   }
 
   return assignment;
@@ -131,7 +132,7 @@ async function updateAssignment(assignmentId, updates, userId) {
   const existing = await query('SELECT * FROM assignments WHERE id = $1', [assignmentId]);
   if (existing.rows.length === 0) throw new NotFoundError('Assignment not found');
 
-  const { title, description, dueDate, onedriveLink, targetType, maxGroupSize } = updates;
+  const { title, description, dueDate, onedriveLink, maxGroupSize } = updates;
 
   const result = await query(
     `UPDATE assignments
@@ -139,11 +140,10 @@ async function updateAssignment(assignmentId, updates, userId) {
          description = COALESCE($2, description),
          due_date = COALESCE($3, due_date),
          onedrive_link = COALESCE($4, onedrive_link),
-         target_type = COALESCE($5, target_type),
-         max_group_size = COALESCE($6, max_group_size)
-     WHERE id = $7
+         max_group_size = COALESCE($5, max_group_size)
+     WHERE id = $6
      RETURNING *`,
-    [title, description, dueDate, onedriveLink, targetType, maxGroupSize, assignmentId]
+    [title, description, dueDate, onedriveLink, maxGroupSize, assignmentId]
   );
 
   return result.rows[0];

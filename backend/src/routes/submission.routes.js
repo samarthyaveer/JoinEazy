@@ -47,4 +47,18 @@ router.post(
   submissionController.confirm
 );
 
+const reviewSchema = Joi.object({
+  evaluationStatus: Joi.string().valid('accepted', 'rejected').required(),
+  feedback: Joi.string().allow('', null).optional(),
+  userId: Joi.number().integer().optional(),
+});
+
+router.post(
+  '/:id/review',
+  authenticate,
+  authorize('admin'),
+  validate(reviewSchema),
+  submissionController.review
+);
+
 module.exports = router;

@@ -159,25 +159,82 @@ export default function AssignmentView() {
               <h3 className="text-sm font-semibold mb-4">Submission</h3>
 
               {submission.status === 'submitted' ? (
-                <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-md border border-emerald-200">
-                  <span className="text-xl">✓</span>
-                  <div>
-                    <p className="text-sm font-medium text-emerald-800">Submitted successfully</p>
-                    <p className="text-xs text-emerald-600">
-                      {submission.confirmed_at && `Confirmed on ${new Date(submission.confirmed_at).toLocaleString('en-IN')}`}
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-md border border-emerald-200">
+                    <span className="text-xl">✓</span>
+                    <div>
+                      <p className="text-sm font-medium text-emerald-800">All members have submitted successfully</p>
+                      <p className="text-xs text-emerald-600">
+                        {submission.confirmed_at && `Confirmed on ${new Date(submission.confirmed_at).toLocaleString('en-IN')}`}
+                      </p>
+                    </div>
                   </div>
+                  
+                  {/* Evaluation Feedback Section */}
+                  <div className="p-4 bg-surface-tertiary rounded-md border border-border">
+                    <h4 className="text-sm font-semibold mb-4 text-text-primary border-b pb-2">Professor's Evaluation</h4>
+
+                    <div className="space-y-4">
+                      {/* Individual Evaluation */}
+                      <div className="space-y-2">
+                        <h5 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Your Individual Feedback</h5>
+                        {submission.my_evaluation_status !== 'ungraded' ? (
+                           <div className="space-y-2">
+                             <div className="flex items-center gap-2">
+                               <span className={`text-xs font-semibold px-2 py-0.5 rounded capitalize border ${submission.my_evaluation_status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                 {submission.my_evaluation_status}
+                               </span>
+                             </div>
+                             {submission.my_feedback && (
+                               <div className="mt-2 p-3 bg-white rounded-md border border-border shadow-sm">
+                                 <p className="text-sm text-text-secondary whitespace-pre-wrap">{submission.my_feedback}</p>
+                               </div>
+                             )}
+                           </div>
+                         ) : (
+                           <p className="text-sm text-text-tertiary italic">Waiting for your individual review...</p>
+                         )}
+                      </div>
+
+                      {/* Group Evaluation */}
+                      <div className="space-y-2 pt-2 border-t border-border">
+                        <h5 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Overall Group Feedback</h5>
+                        {submission.evaluation_status !== 'ungraded' ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded capitalize border ${submission.evaluation_status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                {submission.evaluation_status}
+                              </span>
+                            </div>
+                            {submission.feedback && (
+                              <div className="mt-2 p-3 bg-white rounded-md border border-border shadow-sm">
+                                <p className="text-sm text-text-secondary whitespace-pre-wrap">{submission.feedback}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-text-tertiary italic">Waiting for overall group review...</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : submission.my_submission_status === 'submitted' ? (
+                <div className="p-4 bg-emerald-50 rounded-md border border-emerald-200">
+                  <span className="text-xl inline-block mb-1">✓</span>
+                  <p className="text-sm font-medium text-emerald-800 mb-1">You have submitted your work.</p>
+                  <p className="text-xs text-emerald-600">Waiting for other group members to complete their submissions.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {/* Step 1: Visit OneDrive link */}
                   <div className={`flex items-start gap-3 p-3 rounded-md border ${
-                    submission.status !== 'pending' ? 'bg-brand-50/50 border-brand-200' : 'bg-surface-tertiary border-border'
+                    submission.my_submission_status !== 'pending' ? 'bg-brand-50/50 border-brand-200' : 'bg-surface-tertiary border-border'
                   }`}>
                     <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                      submission.status !== 'pending' ? 'bg-brand-600 text-white' : 'bg-zinc-200 text-text-tertiary'
+                      submission.my_submission_status !== 'pending' ? 'bg-brand-600 text-white' : 'bg-zinc-200 text-text-tertiary'
                     }`}>
-                      {submission.status !== 'pending' ? '✓' : '1'}
+                      {submission.my_submission_status !== 'pending' ? '✓' : '1'}
                     </span>
                     <div className="flex-1">
                       <p className="text-sm font-medium">Open submission link &amp; upload your work</p>
@@ -190,22 +247,22 @@ export default function AssignmentView() {
 
                   {/* Step 2: Initiate submission */}
                   <div className={`flex items-start gap-3 p-3 rounded-md border ${
-                    submission.status === 'awaiting_confirmation' || submission.status === 'submitted'
+                    submission.my_submission_status === 'awaiting_confirmation' || submission.my_submission_status === 'submitted'
                       ? 'bg-brand-50/50 border-brand-200'
                       : 'bg-surface-tertiary border-border'
                   }`}>
                     <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                      submission.status === 'awaiting_confirmation' || submission.status === 'submitted'
+                      submission.my_submission_status === 'awaiting_confirmation' || submission.my_submission_status === 'submitted'
                         ? 'bg-brand-600 text-white' : 'bg-zinc-200 text-text-tertiary'
                     }`}>
-                      {submission.status === 'awaiting_confirmation' ? '✓' : '2'}
+                      {submission.my_submission_status === 'awaiting_confirmation' ? '✓' : '2'}
                     </span>
                     <div className="flex-1">
                       <p className="text-sm font-medium">Confirm you have uploaded</p>
                       <p className="text-xs text-text-tertiary mt-0.5">Click once your files are uploaded to OneDrive</p>
                       <button
                         onClick={handleInitiate}
-                        disabled={submission.status === 'pending' || submission.status === 'awaiting_confirmation'}
+                        disabled={submission.my_submission_status === 'pending' || submission.my_submission_status === 'awaiting_confirmation'}
                         className="btn-secondary text-xs mt-2 px-3 py-1.5"
                       >
                         I have submitted my work
@@ -260,16 +317,25 @@ export default function AssignmentView() {
                         <p className="text-xs text-text-tertiary">{m.email}</p>
                       </div>
                     </div>
-                    {m.role === 'leader' ? (
-                      <span className="text-xs text-brand-600 font-medium">Lead</span>
-                    ) : myGroup.my_role === 'leader' ? (
-                      <button
-                        onClick={() => handleRemoveMember(m.user_id)}
-                        className="text-xs text-status-danger hover:underline"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
+                    <div className="flex items-center gap-2">
+                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${
+                         m.submission_status === 'submitted' ? 'bg-emerald-100 text-emerald-800' :
+                         m.submission_status === 'pending' ? 'bg-zinc-100 text-zinc-600' :
+                         'bg-amber-100 text-amber-800'
+                       }`}>
+                         {m.submission_status?.replace(/_/g, ' ')}
+                       </span>
+                      {m.role === 'leader' ? (
+                        <span className="text-xs text-brand-600 font-medium whitespace-nowrap">Lead</span>
+                      ) : myGroup.my_role === 'leader' ? (
+                        <button
+                          onClick={() => handleRemoveMember(m.user_id)}
+                          className="text-xs text-status-danger hover:underline whitespace-nowrap"
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                     </div>
                   </div>
                 )) || <p className="text-xs text-text-tertiary">Loading members...</p>}
               </div>

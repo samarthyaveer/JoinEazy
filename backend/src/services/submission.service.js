@@ -11,8 +11,8 @@ async function trackLinkClick(submissionId, userId) {
   // Verify submission exists and student is a member
   const sub = await getSubmissionWithAuth(submissionId, userId);
 
-  if (sub.status === 'submitted') {
-    throw new BadRequestError('Assignment already submitted');
+  if (sub.status === 'submitted' || sub.my_submission_status === 'submitted') {
+    throw new BadRequestError('You have already submitted this assignment');
   }
 
   // Log the click
@@ -21,7 +21,15 @@ async function trackLinkClick(submissionId, userId) {
     [submissionId, userId]
   );
 
-  // Update submission if first click
+  // Update individual student status
+  if (sub.my_submission_status === 'pending') {
+    await query(
+      `UPDATE group_members SET submission_status = 'link_visited' WHERE id = $1`,
+      [sub.gm_id]
+    );
+  }
+
+  // Update group submission if it's the first click for the group
   if (sub.status === 'pending') {
     await query(
       `UPDATE submissions SET status = 'link_visited', link_clicked_at = NOW(), link_clicked_by = $1
@@ -45,11 +53,11 @@ async function trackLinkClick(submissionId, userId) {
 async function initiateSubmission(submissionId, userId) {
   const sub = await getSubmissionWithAuth(submissionId, userId);
 
-  if (sub.status === 'submitted') {
-    throw new BadRequestError('Assignment already submitted');
+  if (sub.status === 'submitted' || sub.my_submission_status === 'submitted') {
+    throw new BadRequestError('You have already submitted this assignment');
   }
 
-  if (sub.status === 'pending') {
+  if (sub.my_submission_status === 'pending') {
     throw new BadRequestError('You must visit the OneDrive link first');
   }
 
@@ -58,15 +66,20 @@ async function initiateSubmission(submissionId, userId) {
   const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
 
+  // Update individual token
   await query(
-    `UPDATE submissions
-     SET status = 'awaiting_confirmation',
-         initiated_at = NOW(),
-         initiated_by = $1,
-         confirmation_token = $2,
-         token_expires_at = $3
-     WHERE id = $4`,
-    [userId, hashedToken, expiresAt.toISOString(), submissionId]
+    `UPDATE group_members
+     SET submission_status = 'awaiting_confirmation',
+         confirmation_token = $1,
+         token_expires_at = $2
+     WHERE id = $3`,
+    [hashedToken, expiresAt.toISOString(), sub.gm_id]
+  );
+
+  // Update group submission to 'awaiting_confirmation' optimally
+  await query(
+    `UPDATE submissions SET status = 'awaiting_confirmation', initiated_at = NOW(), initiated_by = $1 WHERE id = $2 AND status != 'submitted'`,
+    [userId, submissionId]
   );
 
   return {
@@ -82,27 +95,27 @@ async function initiateSubmission(submissionId, userId) {
 async function confirmSubmission(submissionId, userId, { token, assignmentTitle }) {
   const sub = await getSubmissionWithAuth(submissionId, userId);
 
-  if (sub.status === 'submitted') {
-    throw new BadRequestError('Assignment already submitted');
+  if (sub.status === 'submitted' || sub.my_submission_status === 'submitted') {
+    throw new BadRequestError('You have already submitted this assignment');
   }
 
-  if (sub.status !== 'awaiting_confirmation') {
+  if (sub.my_submission_status !== 'awaiting_confirmation') {
     throw new BadRequestError('Submission has not been initiated yet');
   }
 
   // Check token expiry
-  if (!sub.token_expires_at || new Date(sub.token_expires_at) < new Date()) {
-    // Reset to link_visited so they can re-initiate
+  if (!sub.my_token_expires_at || new Date(sub.my_token_expires_at) < new Date()) {
+    // Reset individual status to link_visited
     await query(
-      `UPDATE submissions SET status = 'link_visited', confirmation_token = NULL, token_expires_at = NULL WHERE id = $1`,
-      [submissionId]
+      `UPDATE group_members SET submission_status = 'link_visited', confirmation_token = NULL, token_expires_at = NULL WHERE id = $1`,
+      [sub.gm_id]
     );
     throw new BadRequestError('Confirmation token has expired. Please initiate submission again.');
   }
 
   // Verify token
   const hashedProvided = crypto.createHash('sha256').update(token).digest('hex');
-  if (hashedProvided !== sub.confirmation_token) {
+  if (hashedProvided !== sub.my_confirmation_token) {
     throw new BadRequestError('Invalid confirmation token');
   }
 
@@ -117,17 +130,34 @@ async function confirmSubmission(submissionId, userId, { token, assignmentTitle 
     throw new BadRequestError('Assignment title does not match');
   }
 
-  // Finalize submission
+  // Finalize individual submission
   await query(
-    `UPDATE submissions
-     SET status = 'submitted',
-         confirmed_at = NOW(),
-         confirmed_by = $1,
+    `UPDATE group_members
+     SET submission_status = 'submitted',
+         submitted_at = NOW(),
          confirmation_token = NULL,
          token_expires_at = NULL
-     WHERE id = $2`,
-    [userId, submissionId]
+     WHERE id = $1`,
+    [sub.gm_id]
   );
+
+  // Check if all members are now submitted
+  const pendingMembers = await query(
+    `SELECT COUNT(*) as count FROM group_members WHERE group_id = $1 AND submission_status != 'submitted'`,
+    [sub.group_id]
+  );
+
+  if (parseInt(pendingMembers.rows[0].count) === 0) {
+    // All members submitted! Update group submission
+    await query(
+      `UPDATE submissions
+       SET status = 'submitted',
+           confirmed_at = NOW(),
+           confirmed_by = $1
+       WHERE id = $2 AND status != 'submitted'`,
+      [userId, submissionId]
+    );
+  }
 
   return { message: 'Submission confirmed successfully' };
 }
@@ -172,7 +202,7 @@ async function getSubmission(submissionId) {
  */
 async function getSubmissionByAssignmentAndUser(assignmentId, userId) {
   const result = await query(
-    `SELECT s.* FROM submissions s
+    `SELECT s.*, gm.submission_status AS my_submission_status FROM submissions s
      JOIN group_members gm ON gm.group_id = s.group_id
      WHERE s.assignment_id = $1 AND gm.user_id = $2
      LIMIT 1`,
@@ -185,7 +215,8 @@ async function getSubmissionByAssignmentAndUser(assignmentId, userId) {
 
 async function getSubmissionWithAuth(submissionId, userId) {
   const result = await query(
-    `SELECT s.* FROM submissions s
+    `SELECT s.*, gm.id as gm_id, gm.submission_status AS my_submission_status, gm.confirmation_token AS my_confirmation_token, gm.token_expires_at AS my_token_expires_at 
+     FROM submissions s
      JOIN group_members gm ON gm.group_id = s.group_id
      WHERE s.id = $1 AND gm.user_id = $2`,
     [submissionId, userId]
@@ -198,4 +229,35 @@ async function getSubmissionWithAuth(submissionId, userId) {
   return result.rows[0];
 }
 
-module.exports = { trackLinkClick, initiateSubmission, confirmSubmission, getSubmission, getSubmissionByAssignmentAndUser };
+/**
+ * Gate 4: Evaluate submission (Admin)
+ */
+async function reviewSubmission(submissionId, { evaluationStatus, feedback, userId }) {
+  const check = await query('SELECT status, group_id FROM submissions WHERE id = $1', [submissionId]);
+  if (check.rows.length === 0) throw new NotFoundError('Submission not found');
+  if (check.rows[0].status !== 'submitted') {
+    throw new BadRequestError('Cannot evaluate incomplete submissions');
+  }
+
+  if (userId) {
+    // Individual student evaluation
+    await query(
+      `UPDATE group_members
+       SET evaluation_status = $1, feedback = $2
+       WHERE group_id = $3 AND user_id = $4`,
+      [evaluationStatus, feedback, check.rows[0].group_id, userId]
+    );
+    return { message: `Individual submission ${evaluationStatus}`, evaluationStatus };
+  } else {
+    // Whole group evaluation
+    await query(
+      `UPDATE submissions
+       SET evaluation_status = $1, feedback = $2
+       WHERE id = $3`,
+      [evaluationStatus, feedback, submissionId]
+    );
+    return { message: `Group submission ${evaluationStatus}`, evaluationStatus };
+  }
+}
+
+module.exports = { trackLinkClick, initiateSubmission, confirmSubmission, getSubmission, getSubmissionByAssignmentAndUser, reviewSubmission };

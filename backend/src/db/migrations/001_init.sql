@@ -67,6 +67,12 @@ CREATE TABLE IF NOT EXISTS group_members (
     group_id  INTEGER     NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     user_id   INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role      VARCHAR(20) DEFAULT 'member' CHECK (role IN ('leader', 'member')),
+    submission_status VARCHAR(30) DEFAULT 'pending' CHECK (submission_status IN ('pending', 'link_visited', 'awaiting_confirmation', 'submitted')),
+    confirmation_token VARCHAR(255),
+    token_expires_at TIMESTAMPTZ,
+    submitted_at TIMESTAMPTZ,
+    evaluation_status VARCHAR(30) DEFAULT 'ungraded' CHECK (evaluation_status IN ('ungraded', 'accepted', 'rejected')),
+    feedback TEXT,
     joined_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(group_id, user_id)
 );
@@ -91,6 +97,8 @@ CREATE TABLE IF NOT EXISTS submissions (
     token_expires_at    TIMESTAMPTZ,
     confirmed_at        TIMESTAMPTZ,
     confirmed_by        INTEGER     REFERENCES users(id),
+    evaluation_status   VARCHAR(20) DEFAULT 'ungraded' CHECK (evaluation_status IN ('ungraded', 'accepted', 'rejected')),
+    feedback            TEXT,
     UNIQUE(assignment_id, group_id)
 );
 

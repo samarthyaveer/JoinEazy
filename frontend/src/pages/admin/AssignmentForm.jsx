@@ -17,7 +17,6 @@ export default function AssignmentForm() {
     description: '',
     dueDate: '',
     onedriveLink: '',
-    targetType: 'all',
     maxGroupSize: 4,
   });
 
@@ -30,7 +29,6 @@ export default function AssignmentForm() {
           description: a.description || '',
           dueDate: a.due_date ? new Date(a.due_date).toISOString().slice(0, 16) : '',
           onedriveLink: a.onedrive_link,
-          targetType: a.target_type,
           maxGroupSize: a.max_group_size,
         });
       }).catch(() => setError('Failed to load assignment'))
@@ -124,25 +122,7 @@ export default function AssignmentForm() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Target</label>
-            <div className="grid grid-cols-2 gap-2">
-              {['all', 'specific'].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setForm({ ...form, targetType: type })}
-                  className={`px-3 py-2 text-sm rounded-md border transition-colors ${
-                    form.targetType === type
-                      ? 'border-brand-500 bg-brand-50 text-brand-700 font-medium'
-                      : 'border-border text-text-secondary hover:bg-surface-hover'
-                  }`}
-                >
-                  {type === 'all' ? 'All Students' : 'Specific Groups'}
-                </button>
-              ))}
-            </div>
-          </div>
+
 
           <div className="flex gap-3 pt-2">
             <button type="submit" className="btn-primary" disabled={saving}>

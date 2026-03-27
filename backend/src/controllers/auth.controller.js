@@ -24,7 +24,7 @@ async function login(req, res, next) {
 }
 
 async function logout(_req, res) {
-  res.clearCookie('token', { path: '/' });
+  res.clearCookie('token', { ...getCookieOptions(), maxAge: 0 });
   res.json({ message: 'Logged out' });
 }
 

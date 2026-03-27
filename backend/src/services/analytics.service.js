@@ -45,7 +45,10 @@ async function getAssignmentAnalytics(assignmentId) {
   const groupsResult = await query(
     `SELECT g.id, g.name,
             u.full_name AS leader_name,
+            s.id AS submission_id,
             s.status AS submission_status,
+            s.evaluation_status,
+            s.feedback,
             s.confirmed_at,
             s.link_clicked_at,
             (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id) AS member_count
@@ -75,6 +78,30 @@ async function getAssignmentAnalytics(assignmentId) {
     }
     return { ...g, rag_status: ragStatus };
   });
+
+  // Fetch all members for these groups so admin can evaluate them individually
+  if (groups.length > 0) {
+    const groupIds = groups.map(g => g.id);
+    const inParams = groupIds.map((_, i) => `$${i + 2}`).join(',');
+    const membersResult = await query(
+      `SELECT gm.id, gm.group_id, gm.user_id, u.full_name, u.email, gm.role, gm.submission_status, gm.evaluation_status, gm.feedback
+       FROM group_members gm
+       JOIN users u ON u.id = gm.user_id
+       WHERE gm.group_id IN (${inParams})
+       ORDER BY gm.joined_at ASC`,
+      [assignmentId, ...groupIds]
+    );
+
+    const membersByGroup = {};
+    for (const m of membersResult.rows) {
+      if (!membersByGroup[m.group_id]) membersByGroup[m.group_id] = [];
+      membersByGroup[m.group_id].push(m);
+    }
+
+    for (const g of groups) {
+      g.members = membersByGroup[g.id] || [];
+    }
+  }
 
   // Students without a group for this assignment
   const ungroupedResult = await query(
@@ -112,7 +139,7 @@ async function getAssignmentAnalytics(assignmentId) {
  */
 async function getAllAssignmentStats() {
   const result = await query(`
-    SELECT a.id, a.title, a.due_date, a.target_type,
+    SELECT a.id, a.title, a.due_date,
            COUNT(DISTINCT g.id) AS group_count,
            COUNT(DISTINCT CASE WHEN s.status = 'submitted' THEN s.id END) AS submitted_count,
            COUNT(DISTINCT s.id) AS total_submissions,

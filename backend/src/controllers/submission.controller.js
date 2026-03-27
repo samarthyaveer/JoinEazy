@@ -61,4 +61,20 @@ async function getByAssignment(req, res, next) {
   }
 }
 
-module.exports = { trackClick, initiate, confirm, getSubmission, getByAssignment };
+async function review(req, res, next) {
+  try {
+    const result = await submissionService.reviewSubmission(
+      parseInt(req.params.id),
+      {
+        evaluationStatus: req.body.evaluationStatus,
+        feedback: req.body.feedback,
+        userId: req.body.userId,
+      }
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { trackClick, initiate, confirm, getSubmission, getByAssignment, review };

@@ -11,13 +11,7 @@ const createSchema = Joi.object({
   description: Joi.string().allow('', null),
   dueDate: Joi.date().iso().required(),
   onedriveLink: Joi.string().uri().required(),
-  targetType: Joi.string().valid('all', 'specific').default('all'),
   maxGroupSize: Joi.number().integer().min(1).max(20).default(4),
-  groupIds: Joi.array().items(Joi.number().integer()).when('targetType', {
-    is: 'specific',
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
 });
 
 const updateSchema = Joi.object({
@@ -25,7 +19,6 @@ const updateSchema = Joi.object({
   description: Joi.string().allow('', null),
   dueDate: Joi.date().iso(),
   onedriveLink: Joi.string().uri(),
-  targetType: Joi.string().valid('all', 'specific'),
   maxGroupSize: Joi.number().integer().min(1).max(20),
 }).min(1);
 
