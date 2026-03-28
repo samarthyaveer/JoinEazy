@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import Users from 'lucide-react/dist/esm/icons/users';
+import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
+import Circle from 'lucide-react/dist/esm/icons/circle';
+import ExternalLink from 'lucide-react/dist/esm/icons/external-link';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import PageShell from '../../components/layout/PageShell';
 import Modal from '../../components/common/Modal';
 import { StatusBadge, Spinner, EmptyState } from '../../components/common/UIComponents';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+
+const STATUS_ORDER = ['pending', 'link_visited', 'awaiting_confirmation', 'submitted'];
+const dateFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+const dateTimeFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 export default function AssignmentView() {
   const { id } = useParams();
@@ -13,44 +22,39 @@ export default function AssignmentView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Group creation
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [creating, setCreating] = useState(false);
 
-  // Add member
   const [addEmail, setAddEmail] = useState('');
   const [addingMember, setAddingMember] = useState(false);
   const [memberMsg, setMemberMsg] = useState({ type: '', text: '' });
 
-  // Submission flow
   const [submissionToken, setSubmissionToken] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmTitle, setConfirmTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [subMsg, setSubMsg] = useState('');
 
-  const loadAssignment = async () => {
+  const loadAssignment = useCallback(async () => {
     try {
       const { data } = await api.get(`/assignments/${id}`);
       setAssignment(data.assignment);
     } catch (err) {
-      setError('Failed to load assignment');
+      setError('Failed to load assignment. Please try refreshing.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { loadAssignment(); }, [id]);
+  useEffect(() => { loadAssignment(); }, [loadAssignment]);
 
   if (loading) return <PageShell title="Assignment"><div className="flex justify-center py-20"><Spinner /></div></PageShell>;
-  if (error || !assignment) return <PageShell title="Assignment"><EmptyState icon="⚠️" title={error || 'Not found'} /></PageShell>;
+  if (error || !assignment) return <PageShell title="Assignment"><EmptyState icon={AlertTriangle} title={error || 'Assignment not found'} /></PageShell>;
 
   const myGroup = assignment.my_group;
   const submission = assignment.my_submission;
   const isPastDue = new Date(assignment.due_date) < new Date();
-
-  // --- Handlers ---
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
@@ -61,7 +65,7 @@ export default function AssignmentView() {
       setGroupName('');
       await loadAssignment();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create group');
+      setError(err.response?.data?.error || 'Failed to create group. Try a different name.');
     } finally {
       setCreating(false);
     }
@@ -77,7 +81,7 @@ export default function AssignmentView() {
       setAddEmail('');
       await loadAssignment();
     } catch (err) {
-      setMemberMsg({ type: 'error', text: err.response?.data?.error || 'Failed to add member' });
+      setMemberMsg({ type: 'error', text: err.response?.data?.error || 'Failed to add member. Check the email address.' });
     } finally {
       setAddingMember(false);
     }
@@ -88,7 +92,7 @@ export default function AssignmentView() {
       await api.delete(`/groups/${myGroup.id}/members/${userId}`);
       await loadAssignment();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to remove member');
+      setMemberMsg({ type: 'error', text: err.response?.data?.error || 'Failed to remove member.' });
     }
   };
 
@@ -98,7 +102,6 @@ export default function AssignmentView() {
       window.open(assignment.onedrive_link, '_blank');
       await loadAssignment();
     } catch (err) {
-      console.error(err);
       window.open(assignment.onedrive_link, '_blank');
     }
   };
@@ -111,7 +114,7 @@ export default function AssignmentView() {
       setShowConfirm(true);
       await loadAssignment();
     } catch (err) {
-      setSubMsg(err.response?.data?.error || 'Failed to initiate');
+      setSubMsg(err.response?.data?.error || 'Failed to initiate. Try again.');
     }
   };
 
@@ -128,323 +131,311 @@ export default function AssignmentView() {
       setConfirmTitle('');
       await loadAssignment();
     } catch (err) {
-      setSubMsg(err.response?.data?.error || 'Confirmation failed');
+      setSubMsg(err.response?.data?.error || 'Confirmation failed. Check the title and try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const isStepDone = (step) => {
+    const current = STATUS_ORDER.indexOf(submission?.my_submission_status || 'pending');
+    return current >= step;
+  };
+
   return (
     <PageShell
       title={assignment.title}
-      subtitle={`Due ${new Date(assignment.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+      subtitle={`Due ${dateFmt.format(new Date(assignment.due_date))}`}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Assignment details */}
-          <div className="card p-5">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="card p-6">
+            <div className="flex items-center gap-2 mb-4">
               <StatusBadge status={submission?.status || 'pending'} />
-              {isPastDue && <span className="badge-danger">Overdue</span>}
+              {isPastDue ? <span className="badge-danger">Overdue</span> : null}
             </div>
-            {assignment.description && (
-              <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{assignment.description}</p>
-            )}
+            {assignment.description ? (
+              <p className="text-body text-text-secondary leading-relaxed whitespace-pre-wrap">{assignment.description}</p>
+            ) : null}
           </div>
 
           {/* Submission section */}
-          {myGroup && submission && (
-            <div className="card p-5">
-              <h3 className="text-sm font-semibold mb-4">Submission</h3>
+          {myGroup && submission ? (
+            <div className="card p-6">
+              <h3 className="text-section text-text-primary mb-5">Submission</h3>
 
               {submission.status === 'submitted' ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-md border border-emerald-200">
-                    <span className="text-xl">✓</span>
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 p-4 bg-semantic-success/10 rounded-xl border border-semantic-success/20">
+                    <CheckCircle2 size={20} className="text-semantic-success flex-shrink-0" aria-hidden="true" />
                     <div>
-                      <p className="text-sm font-medium text-emerald-800">All members have submitted successfully</p>
-                      <p className="text-xs text-emerald-600">
-                        {submission.confirmed_at && `Confirmed on ${new Date(submission.confirmed_at).toLocaleString('en-IN')}`}
+                      <p className="text-body font-medium text-text-primary">All members have submitted</p>
+                      <p className="text-meta text-text-secondary mt-0.5">
+                        {submission.confirmed_at ? `Confirmed on ${dateTimeFmt.format(new Date(submission.confirmed_at))}` : null}
                       </p>
                     </div>
                   </div>
-                  
-                  {/* Evaluation Feedback Section */}
-                  <div className="p-4 bg-surface-tertiary rounded-md border border-border">
-                    <h4 className="text-sm font-semibold mb-4 text-text-primary border-b pb-2">Professor's Evaluation</h4>
 
-                    <div className="space-y-4">
-                      {/* Individual Evaluation */}
-                      <div className="space-y-2">
-                        <h5 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Your Individual Feedback</h5>
-                        {submission.my_evaluation_status !== 'ungraded' ? (
-                           <div className="space-y-2">
-                             <div className="flex items-center gap-2">
-                               <span className={`text-xs font-semibold px-2 py-0.5 rounded capitalize border ${submission.my_evaluation_status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                 {submission.my_evaluation_status}
-                               </span>
-                             </div>
-                             {submission.my_feedback && (
-                               <div className="mt-2 p-3 bg-white rounded-md border border-border shadow-sm">
-                                 <p className="text-sm text-text-secondary whitespace-pre-wrap">{submission.my_feedback}</p>
-                               </div>
-                             )}
-                           </div>
-                         ) : (
-                           <p className="text-sm text-text-tertiary italic">Waiting for your individual review...</p>
-                         )}
-                      </div>
+                  {/* Evaluation Feedback */}
+                  <div className="space-y-5">
+                    <h4 className="text-body font-semibold text-text-primary">Professor's Evaluation</h4>
 
-                      {/* Group Evaluation */}
-                      <div className="space-y-2 pt-2 border-t border-border">
-                        <h5 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Overall Group Feedback</h5>
-                        {submission.evaluation_status !== 'ungraded' ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs font-semibold px-2 py-0.5 rounded capitalize border ${submission.evaluation_status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                {submission.evaluation_status}
-                              </span>
+                    <div>
+                      <p className="text-label text-text-tertiary uppercase tracking-widest mb-2">Your Individual Feedback</p>
+                      {submission.my_evaluation_status !== 'ungraded' ? (
+                        <div>
+                          <span className={`badge ${submission.my_evaluation_status === 'accepted' ? 'badge-success' : 'badge-danger'} capitalize`}>
+                            {submission.my_evaluation_status}
+                          </span>
+                          {submission.my_feedback ? (
+                            <div className="mt-3 p-4 bg-surface-overlay rounded-xl border border-border">
+                              <p className="text-body text-text-secondary whitespace-pre-wrap">{submission.my_feedback}</p>
                             </div>
-                            {submission.feedback && (
-                              <div className="mt-2 p-3 bg-white rounded-md border border-border shadow-sm">
-                                <p className="text-sm text-text-secondary whitespace-pre-wrap">{submission.feedback}</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-text-tertiary italic">Waiting for overall group review...</p>
-                        )}
-                      </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p className="text-meta text-text-tertiary">Awaiting review…</p>
+                      )}
+                    </div>
+
+                    <div className="pt-5 border-t border-border">
+                      <p className="text-label text-text-tertiary uppercase tracking-widest mb-2">Overall Group Feedback</p>
+                      {submission.evaluation_status !== 'ungraded' ? (
+                        <div>
+                          <span className={`badge ${submission.evaluation_status === 'accepted' ? 'badge-success' : 'badge-danger'} capitalize`}>
+                            {submission.evaluation_status}
+                          </span>
+                          {submission.feedback ? (
+                            <div className="mt-3 p-4 bg-surface-overlay rounded-xl border border-border">
+                              <p className="text-body text-text-secondary whitespace-pre-wrap">{submission.feedback}</p>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p className="text-meta text-text-tertiary">Awaiting review…</p>
+                      )}
                     </div>
                   </div>
                 </div>
               ) : submission.my_submission_status === 'submitted' ? (
-                <div className="p-4 bg-emerald-50 rounded-md border border-emerald-200">
-                  <span className="text-xl inline-block mb-1">✓</span>
-                  <p className="text-sm font-medium text-emerald-800 mb-1">You have submitted your work.</p>
-                  <p className="text-xs text-emerald-600">Waiting for other group members to complete their submissions.</p>
+                <div className="flex items-center gap-3 p-4 bg-semantic-success/10 rounded-xl border border-semantic-success/20">
+                  <CheckCircle2 size={20} className="text-semantic-success flex-shrink-0" aria-hidden="true" />
+                  <div>
+                    <p className="text-body font-medium text-text-primary">You have submitted your work</p>
+                    <p className="text-meta text-text-secondary">Waiting for other members…</p>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {/* Step 1: Visit OneDrive link */}
-                  <div className={`flex items-start gap-3 p-3 rounded-md border ${
-                    submission.my_submission_status !== 'pending' ? 'bg-brand-50/50 border-brand-200' : 'bg-surface-tertiary border-border'
-                  }`}>
-                    <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                      submission.my_submission_status !== 'pending' ? 'bg-brand-600 text-white' : 'bg-zinc-200 text-text-tertiary'
-                    }`}>
-                      {submission.my_submission_status !== 'pending' ? '✓' : '1'}
-                    </span>
+                <div className="space-y-4">
+                  {/* Step 1 */}
+                  <div className={`flex items-start gap-4 p-4 rounded-xl border ${isStepDone(1) ? 'bg-accent/8 border-accent/20' : 'bg-surface-overlay border-border'}`}>
+                    <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isStepDone(1) ? 'bg-accent text-white' : 'bg-surface-overlay text-text-tertiary border border-border-strong'}`}>
+                      {isStepDone(1) ? <CheckCircle2 size={14} aria-hidden="true" /> : <span className="text-label font-semibold">1</span>}
+                    </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Open submission link &amp; upload your work</p>
-                      <p className="text-xs text-text-tertiary mt-0.5">Click to open OneDrive and upload your files</p>
-                      <button onClick={handleTrackClick} className="btn-primary text-xs mt-2 px-3 py-1.5">
-                        Open OneDrive Link ↗
+                      <p className="text-body font-medium text-text-primary">Open Submission Link & Upload</p>
+                      <p className="text-meta text-text-secondary mt-0.5">Click to open OneDrive and upload your files</p>
+                      <button onClick={handleTrackClick} className="btn-primary btn-sm mt-3">
+                        <ExternalLink size={14} aria-hidden="true" />
+                        Open OneDrive
                       </button>
                     </div>
                   </div>
 
-                  {/* Step 2: Initiate submission */}
-                  <div className={`flex items-start gap-3 p-3 rounded-md border ${
-                    submission.my_submission_status === 'awaiting_confirmation' || submission.my_submission_status === 'submitted'
-                      ? 'bg-brand-50/50 border-brand-200'
-                      : 'bg-surface-tertiary border-border'
-                  }`}>
-                    <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                      submission.my_submission_status === 'awaiting_confirmation' || submission.my_submission_status === 'submitted'
-                        ? 'bg-brand-600 text-white' : 'bg-zinc-200 text-text-tertiary'
-                    }`}>
-                      {submission.my_submission_status === 'awaiting_confirmation' ? '✓' : '2'}
-                    </span>
+                  {/* Step 2 */}
+                  <div className={`flex items-start gap-4 p-4 rounded-xl border ${isStepDone(2) ? 'bg-accent/8 border-accent/20' : 'bg-surface-overlay border-border'}`}>
+                    <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isStepDone(2) ? 'bg-accent text-white' : 'bg-surface-overlay text-text-tertiary border border-border-strong'}`}>
+                      {isStepDone(2) ? <CheckCircle2 size={14} aria-hidden="true" /> : <span className="text-label font-semibold">2</span>}
+                    </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Confirm you have uploaded</p>
-                      <p className="text-xs text-text-tertiary mt-0.5">Click once your files are uploaded to OneDrive</p>
+                      <p className="text-body font-medium text-text-primary">Confirm Upload</p>
+                      <p className="text-meta text-text-secondary mt-0.5">Click once your files are uploaded</p>
                       <button
                         onClick={handleInitiate}
-                        disabled={submission.my_submission_status === 'pending' || submission.my_submission_status === 'awaiting_confirmation'}
-                        className="btn-secondary text-xs mt-2 px-3 py-1.5"
+                        disabled={!isStepDone(1) || isStepDone(2)}
+                        className="btn-secondary btn-sm mt-3"
                       >
-                        I have submitted my work
+                        I Have Submitted
                       </button>
                     </div>
                   </div>
 
-                  {subMsg && (
-                    <p className="text-sm text-status-danger px-1">{subMsg}</p>
-                  )}
+                  {subMsg ? (
+                    <p className="text-meta text-semantic-danger px-1">{subMsg}</p>
+                  ) : null}
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
-          {/* No group yet */}
-          {!myGroup && (
-            <div className="card p-5">
+          {/* No group */}
+          {!myGroup ? (
+            <div className="card p-6">
               <EmptyState
-                icon="👥"
+                icon={Users}
                 title="You need a group for this assignment"
-                description="Create a group and add your team members to start working on this assignment."
+                description="Create a group and add your team members to start."
                 action={
-                  <button onClick={() => setShowCreateGroup(true)} className="btn-primary text-xs">
+                  <button onClick={() => setShowCreateGroup(true)} className="btn-primary btn-sm">
                     Create Group
                   </button>
                 }
               />
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Sidebar column */}
         <div className="space-y-4">
-          {/* Group info */}
-          {myGroup && (
-            <div className="card p-4">
-              <h3 className="text-sm font-semibold mb-3">Your Group</h3>
-              <p className="text-sm font-medium">{myGroup.name}</p>
-              <p className="text-xs text-text-tertiary mt-0.5 mb-3 capitalize">Role: {myGroup.my_role}</p>
+          {myGroup ? (
+            <div className="card p-5">
+              <h3 className="text-section text-text-primary mb-4">Your Group</h3>
+              <p className="text-body font-medium text-text-primary">{myGroup.name}</p>
+              <p className="text-meta text-text-secondary mt-0.5 mb-4 capitalize">Role: {myGroup.my_role}</p>
 
-              {/* Members list */}
-              <div className="space-y-2 mb-3">
+              <div className="space-y-3 mb-4">
                 {assignment.my_group_members?.map((m) => (
                   <div key={m.user_id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-surface-overlay flex items-center justify-center text-label font-medium text-text-secondary">
                         {m.full_name?.charAt(0)}
                       </div>
-                      <div>
-                        <p className="text-xs font-medium">{m.full_name}</p>
-                        <p className="text-xs text-text-tertiary">{m.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-meta font-medium text-text-primary truncate">{m.full_name}</p>
+                        <p className="text-label text-text-tertiary truncate">{m.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${
-                         m.submission_status === 'submitted' ? 'bg-emerald-100 text-emerald-800' :
-                         m.submission_status === 'pending' ? 'bg-zinc-100 text-zinc-600' :
-                         'bg-amber-100 text-amber-800'
-                       }`}>
-                         {m.submission_status?.replace(/_/g, ' ')}
-                       </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-label font-medium capitalize ${
+                        m.submission_status === 'submitted' ? 'text-semantic-success' :
+                        m.submission_status === 'pending' ? 'text-text-tertiary' :
+                        'text-semantic-warning'
+                      }`}>
+                        {m.submission_status?.replace(/_/g, ' ')}
+                      </span>
                       {m.role === 'leader' ? (
-                        <span className="text-xs text-brand-600 font-medium whitespace-nowrap">Lead</span>
+                        <span className="text-label text-accent font-medium">Lead</span>
                       ) : myGroup.my_role === 'leader' ? (
                         <button
                           onClick={() => handleRemoveMember(m.user_id)}
-                          className="text-xs text-status-danger hover:underline whitespace-nowrap"
+                          className="text-label text-semantic-danger hover:underline"
                         >
                           Remove
                         </button>
                       ) : null}
-                     </div>
+                    </div>
                   </div>
-                )) || <p className="text-xs text-text-tertiary">Loading members...</p>}
+                )) || <p className="text-meta text-text-tertiary">Loading members…</p>}
               </div>
 
-              {/* Add member form (leader only) */}
-              {myGroup.my_role === 'leader' && (
-                <form onSubmit={handleAddMember} className="pt-3 border-t">
-                  <label className="block text-xs font-medium mb-1">Add member by email</label>
+              {myGroup.my_role === 'leader' ? (
+                <form onSubmit={handleAddMember} className="pt-4 border-t border-border">
+                  <label className="block text-label font-medium text-text-tertiary mb-2 uppercase tracking-widest" htmlFor="add-member-email">Add Member by Email</label>
                   <div className="flex gap-2">
                     <input
+                      id="add-member-email"
+                      name="memberEmail"
                       type="email"
-                      className="input-field text-xs flex-1"
+                      autoComplete="email"
+                      spellCheck={false}
+                      className="input-field flex-1 text-meta"
                       placeholder="student@email.com"
                       value={addEmail}
                       onChange={(e) => setAddEmail(e.target.value)}
                       required
+                      style={{ height: '36px' }}
                     />
-                    <button type="submit" className="btn-primary text-xs px-3" disabled={addingMember}>
-                      {addingMember ? '...' : 'Add'}
+                    <button type="submit" className="btn-primary btn-sm" disabled={addingMember}>
+                      {addingMember ? '…' : 'Add'}
                     </button>
                   </div>
-                  {memberMsg.text && (
-                    <p className={`text-xs mt-1.5 ${memberMsg.type === 'error' ? 'text-status-danger' : 'text-status-success'}`}>
+                  {memberMsg.text ? (
+                    <p className={`text-meta mt-2 ${memberMsg.type === 'error' ? 'text-semantic-danger' : 'text-semantic-success'}`}>
                       {memberMsg.text}
                     </p>
-                  )}
+                  ) : null}
                 </form>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
 
-          {/* Assignment meta */}
-          <div className="card p-4">
-            <h3 className="text-sm font-semibold mb-3">Details</h3>
-            <dl className="space-y-2 text-sm">
+          <div className="card p-5">
+            <h3 className="text-section text-text-primary mb-4">Details</h3>
+            <dl className="space-y-3">
               <div>
-                <dt className="text-xs text-text-tertiary">Posted by</dt>
-                <dd className="font-medium">{assignment.creator_name}</dd>
+                <dt className="text-label text-text-tertiary uppercase tracking-widest">Posted By</dt>
+                <dd className="text-body font-medium text-text-primary mt-0.5">{assignment.creator_name}</dd>
               </div>
               <div>
-                <dt className="text-xs text-text-tertiary">Due date</dt>
-                <dd className={isPastDue ? 'text-status-danger font-medium' : ''}>
-                  {new Date(assignment.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                <dt className="text-label text-text-tertiary uppercase tracking-widest">Due Date</dt>
+                <dd className={`text-body mt-0.5 ${isPastDue ? 'text-semantic-danger font-medium' : 'text-text-primary'}`}>
+                  {dateTimeFmt.format(new Date(assignment.due_date))}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-text-tertiary">Max group size</dt>
-                <dd>{assignment.max_group_size} members</dd>
+                <dt className="text-label text-text-tertiary uppercase tracking-widest">Max Group Size</dt>
+                <dd className="text-body text-text-primary mt-0.5 font-mono" style={{ fontVariantNumeric: 'tabular-nums' }}>{assignment.max_group_size} members</dd>
               </div>
               <div>
-                <dt className="text-xs text-text-tertiary">Groups formed</dt>
-                <dd>{assignment.groups?.length || 0}</dd>
+                <dt className="text-label text-text-tertiary uppercase tracking-widest">Groups Formed</dt>
+                <dd className="text-body text-text-primary mt-0.5 font-mono" style={{ fontVariantNumeric: 'tabular-nums' }}>{assignment.groups?.length || 0}</dd>
               </div>
             </dl>
           </div>
         </div>
       </div>
 
-      {/* Create group modal */}
-      <Modal isOpen={showCreateGroup} onClose={() => setShowCreateGroup(false)} title="Create a group">
-        <form onSubmit={handleCreateGroup} className="space-y-4">
+      <Modal isOpen={showCreateGroup} onClose={() => setShowCreateGroup(false)} title="Create a Group">
+        <form onSubmit={handleCreateGroup} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1.5">Group name</label>
+            <label className="block text-meta font-medium text-text-primary mb-2" htmlFor="group-name">Group Name</label>
             <input
+              id="group-name"
+              name="groupName"
               className="input-field"
-              placeholder="e.g. Team Alpha"
+              placeholder="e.g. Team Alpha…"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
+              autoComplete="off"
               required
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setShowCreateGroup(false)} className="btn-secondary text-sm">
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary text-sm" disabled={creating}>
-              {creating ? 'Creating...' : 'Create Group'}
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setShowCreateGroup(false)} className="btn-secondary">Cancel</button>
+            <button type="submit" className="btn-primary" disabled={creating}>
+              {creating ? 'Creating…' : 'Create Group'}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Confirm submission modal (Gate 3) */}
-      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Confirm Your Submission">
-        <form onSubmit={handleConfirm} className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            To confirm your submission, type the assignment title below:
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Confirm Submission">
+        <form onSubmit={handleConfirm} className="space-y-5">
+          <p className="text-body text-text-secondary">
+            To confirm, type the assignment title below:
           </p>
-          <p className="text-sm font-mono bg-surface-tertiary px-3 py-2 rounded-md border">
+          <p className="text-body font-mono bg-surface-overlay px-4 py-3 rounded-xl border border-border text-text-primary">
             {assignment.title}
           </p>
           <input
             className="input-field"
-            placeholder="Type the assignment title exactly"
+            placeholder="Type the assignment title exactly…"
             value={confirmTitle}
             onChange={(e) => setConfirmTitle(e.target.value)}
+            autoComplete="off"
             required
           />
-          {subMsg && <p className="text-sm text-status-danger">{subMsg}</p>}
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setShowConfirm(false)} className="btn-secondary text-sm">
-              Cancel
-            </button>
+          {subMsg ? <p className="text-meta text-semantic-danger">{subMsg}</p> : null}
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setShowConfirm(false)} className="btn-secondary">Cancel</button>
             <button
               type="submit"
-              className="btn-primary text-sm"
+              className="btn-primary"
               disabled={submitting || confirmTitle.trim().toLowerCase() !== assignment.title.trim().toLowerCase()}
             >
-              {submitting ? 'Confirming...' : 'Confirm Submission'}
+              {submitting ? 'Confirming…' : 'Confirm Submission'}
             </button>
           </div>
         </form>

@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
+// Direct imports — no lazy loading. Pages are small (2-15KB each).
+// Lazy loading caused blank white screens on every navigation click.
+import AuthPage from './pages/AuthPage';
 import StudentDashboard from './pages/student/Dashboard';
 import StudentAssignments from './pages/student/Assignments';
 import AssignmentView from './pages/student/AssignmentView';
@@ -19,17 +19,21 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="w-5 h-5 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
       </div>
     );
   }
 
+  const authRedirect = user
+    ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} />
+    : null;
+
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/login" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} /> : <Login />} />
-      <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} /> : <Register />} />
+      {/* Auth — single sliding panel */}
+      <Route path="/login" element={authRedirect || <AuthPage />} />
+      <Route path="/register" element={authRedirect || <Navigate to="/login?mode=register" replace />} />
 
       {/* Student routes */}
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
@@ -45,7 +49,7 @@ function AppRoutes() {
       <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><Analytics /></ProtectedRoute>} />
       <Route path="/admin/analytics/:id" element={<ProtectedRoute allowedRoles={['admin']}><Analytics /></ProtectedRoute>} />
 
-      {/* Default redirect */}
+      {/* Default */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );

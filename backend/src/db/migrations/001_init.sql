@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS assignments (
     description   TEXT,
     due_date      TIMESTAMPTZ  NOT NULL,
     onedrive_link TEXT         NOT NULL,
-    target_type   VARCHAR(20)  NOT NULL DEFAULT 'all' CHECK (target_type IN ('all', 'specific')),
     max_group_size INTEGER     NOT NULL DEFAULT 4 CHECK (max_group_size >= 1 AND max_group_size <= 20),
     created_by    INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at    TIMESTAMPTZ  DEFAULT NOW(),
@@ -50,17 +49,7 @@ CREATE TABLE IF NOT EXISTS groups (
 CREATE INDEX IF NOT EXISTS idx_groups_assignment ON groups(assignment_id);
 
 
--- 4. ASSIGNMENT_TARGETS
--- Links assignments to specific groups (when target_type = 'specific')
-CREATE TABLE IF NOT EXISTS assignment_targets (
-    id            SERIAL PRIMARY KEY,
-    assignment_id INTEGER NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
-    group_id      INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    UNIQUE(assignment_id, group_id)
-);
-
-
--- 5. GROUP_MEMBERS
+-- 4. GROUP_MEMBERS
 -- Tracks which students belong to which groups
 CREATE TABLE IF NOT EXISTS group_members (
     id        SERIAL PRIMARY KEY,

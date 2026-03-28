@@ -1,148 +1,191 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Users from 'lucide-react/dist/esm/icons/users';
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down';
+import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import PageShell from '../../components/layout/PageShell';
+import Modal from '../../components/common/Modal';
 import { RagDot, StatCard, EmptyState, Spinner } from '../../components/common/UIComponents';
 import api from '../../services/api';
 
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'; // Need nice icons, or use plain HTML if not installed. Let's use simple SVG
+// Hoisted for dark chart
+const tooltipStyle = {
+  background: '#FFFFFF',
+  border: '1px solid rgba(0,0,0,0.08)',
+  borderRadius: '12px',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+  fontSize: '12px',
+  color: '#0F0F0F',
+};
+const xAxisTick = { fontSize: 11, fill: '#A0A0A0' };
+const yAxisTick = { fontSize: 11, fill: '#A0A0A0' };
+const axisLineStyle = { stroke: 'rgba(0,0,0,0.06)' };
 
-const ChevronDown = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-);
-const ChevronUp = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>
-);
+const dateFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-const GroupRow = ({ g, setEvalModal }) => {
+function GroupRow({ group, onEvaluate }) {
   const [expanded, setExpanded] = useState(false);
+
+  const memberCount = group.members?.length || 0;
+  const submittedCount = group.members?.reduce(
+    (acc, m) => acc + (m.submission_status === 'submitted' ? 1 : 0),
+    0
+  ) || 0;
+  const ragStatus = submittedCount === memberCount ? 'green' : submittedCount > 0 ? 'amber' : 'red';
 
   return (
     <>
-      <tr onClick={() => setExpanded(!expanded)} className="hover:bg-surface-hover transition-colors cursor-pointer group">
-        <td className="px-4 py-2.5">
-          <button className="text-text-tertiary group-hover:text-text-primary transition-colors">
-            {expanded ? <ChevronUp /> : <ChevronDown />}
-          </button>
+      <tr
+        className="hover:bg-surface-overlay/50 transition-colors cursor-pointer"
+        onClick={() => setExpanded(prev => !prev)}
+      >
+        <td className="px-5 py-4">
+          <div className="flex items-center gap-2">
+            <RagDot status={ragStatus} />
+            <span className="text-body font-medium text-text-primary">{group.name}</span>
+          </div>
         </td>
-        <td className="px-4 py-2.5 whitespace-nowrap"><RagDot status={g.rag_status} /></td>
-        <td className="px-4 py-2.5 font-medium">{g.name}</td>
-        <td className="px-4 py-2.5 text-text-secondary">{g.leader_name}</td>
-        <td className="px-4 py-2.5 font-mono text-xs">{g.member_count}</td>
-        <td className="px-4 py-2.5 capitalize text-xs">
-          {g.submission_status?.replace(/_/g, ' ') || 'pending'}
+        <td className="px-5 py-4 font-mono text-meta text-text-secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {submittedCount}/{memberCount}
         </td>
-        <td className="px-4 py-2.5 text-text-tertiary text-xs whitespace-nowrap">
-          {g.confirmed_at
-            ? new Date(g.confirmed_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-            : '—'}
+        <td className="px-5 py-4">
+          <span className={`badge ${
+            group.evaluation_status === 'accepted' ? 'badge-success' :
+            group.evaluation_status === 'rejected' ? 'badge-danger' :
+            'badge-neutral'
+          } capitalize`}>
+            {group.evaluation_status || 'ungraded'}
+          </span>
         </td>
-        <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
-          {g.submission_status === 'submitted' ? (
-            <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded capitalize ${g.evaluation_status === 'accepted' ? 'bg-green-100 text-green-700' : g.evaluation_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-zinc-100 text-zinc-600'}`}>
-                {g.evaluation_status || 'ungraded'}
-              </span>
-              <button 
-                onClick={() => setEvalModal({ isOpen: true, submissionId: g.submission_id, groupName: g.name, status: g.evaluation_status !== 'ungraded' ? g.evaluation_status : 'accepted', feedback: g.feedback || '', userId: null, targetName: 'Whole Group', submitting: false })}
-                className="text-brand-600 hover:text-brand-700 text-xs font-medium whitespace-nowrap border border-brand-200 px-2 py-0.5 rounded-md hover:bg-brand-50 transition-colors"
-                title="Evaluate entire group"
-              >
-                Eval Group
-              </button>
-            </div>
-          ) : (
-            <span className="text-[10px] text-text-tertiary">N/A</span>
-          )}
+        <td className="px-5 py-4 text-right text-text-tertiary">
+          {expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
         </td>
       </tr>
-      
-      {expanded && (
-        <tr className="bg-zinc-50/50">
-          <td colSpan="8" className="px-0 py-0 border-b">
-            <div className="pl-14 pr-4 py-3 border-l-2 border-brand-400">
-              <h4 className="text-xs font-semibold mb-2 text-text-secondary uppercase">Individual Progress & Feedback</h4>
-              <div className="space-y-2">
-                {g.members?.map(m => (
-                  <div key={m.user_id} className="flex items-center justify-between p-2 bg-white rounded-md border border-border shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-medium text-text-secondary">
-                        {m.full_name?.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium leading-none">{m.full_name} {m.role === 'leader' && <span className="text-[10px] text-brand-600 ml-1 font-semibold">(Lead)</span>}</p>
-                        <p className="text-xs text-text-tertiary mt-0.5">{m.email}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      {/* Step Status Badge */}
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full capitalize border ${
-                        m.submission_status === 'submitted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        m.submission_status === 'pending' ? 'bg-zinc-50 text-zinc-500 border-zinc-200' :
-                        'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>
-                        Step: {m.submission_status?.replace(/_/g, ' ')}
-                      </span>
-                      
-                      {/* Evaluation Badge (If Group is Submitted) */}
-                      {g.submission_status === 'submitted' && (
-                        <div className="flex items-center gap-2">
-                           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded capitalize ${m.evaluation_status === 'accepted' ? 'bg-green-100 text-green-700' : m.evaluation_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
-                              {m.evaluation_status || 'ungraded'}
-                           </span>
-                           <button 
-                             onClick={() => setEvalModal({ isOpen: true, submissionId: g.submission_id, groupName: g.name, status: m.evaluation_status !== 'ungraded' ? m.evaluation_status : 'accepted', feedback: m.feedback || '', userId: m.user_id, targetName: m.full_name, submitting: false })}
-                             className="text-brand-600 hover:text-brand-700 text-[10px] font-medium whitespace-nowrap underline"
-                           >
-                             Eval Student
-                           </button>
-                        </div>
-                      )}
-                    </div>
+
+      {expanded ? (
+        <>
+          {group.members?.map((m) => (
+            <tr key={m.user_id} className="bg-surface-overlay/30">
+              <td className="px-5 py-3 pl-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-surface-overlay flex items-center justify-center text-label font-medium text-text-secondary">
+                    {m.full_name?.charAt(0)}
                   </div>
-                ))}
-                {(!g.members || g.members.length === 0) && <p className="text-xs text-text-tertiary">No members found.</p>}
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
+                  <div className="min-w-0">
+                    <p className="text-meta font-medium text-text-primary truncate">{m.full_name}</p>
+                    <p className="text-label text-text-tertiary truncate">{m.email}</p>
+                  </div>
+                </div>
+              </td>
+              <td className="px-5 py-3">
+                <span className={`text-label font-medium capitalize ${
+                  m.submission_status === 'submitted' ? 'text-semantic-success' :
+                  m.submission_status === 'pending' ? 'text-text-tertiary' :
+                  'text-semantic-warning'
+                }`}>
+                  {m.submission_status?.replace(/_/g, ' ')}
+                </span>
+              </td>
+              <td className="px-5 py-3">
+                <span className={`badge ${
+                  m.evaluation_status === 'accepted' ? 'badge-success' :
+                  m.evaluation_status === 'rejected' ? 'badge-danger' :
+                  'badge-neutral'
+                } capitalize`}>
+                  {m.evaluation_status || 'ungraded'}
+                </span>
+              </td>
+              <td className="px-5 py-3 text-right">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onEvaluate(group, m); }}
+                  className="text-meta text-accent hover:text-accent-hover font-medium transition-colors"
+                >
+                  Review
+                </button>
+              </td>
+            </tr>
+          ))}
+          <tr className="bg-surface-overlay/30 border-b border-border">
+            <td colSpan={4} className="px-5 py-3 pl-10">
+              <button
+                onClick={(e) => { e.stopPropagation(); onEvaluate(group, null); }}
+                className="text-meta text-accent-text hover:text-accent-hover font-medium transition-colors"
+              >
+                Review Entire Group
+              </button>
+            </td>
+          </tr>
+        </>
+      ) : null}
     </>
   );
+}
+
+const INITIAL_EVAL_MODAL = {
+  isOpen: false, submissionId: null, groupName: '', targetName: '', userId: null,
+  status: 'accepted', feedback: '', submitting: false,
 };
 
 export default function Analytics() {
-
-  const [evalModal, setEvalModal] = useState({ isOpen: false, submissionId: null, groupName: '', targetName: '', userId: null, status: 'accepted', feedback: '', submitting: false });
+  const { id } = useParams();
+  const [analytics, setAnalytics] = useState(null);
+  const [allStats, setAllStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [evalModal, setEvalModal] = useState(INITIAL_EVAL_MODAL);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    if (id) {
-      api.get(`/analytics/assignments/${id}`).then(({ data }) => {
-        setAnalytics(data.analytics);
-      }).catch(console.error).finally(() => setLoading(false));
-    } else {
-      api.get('/analytics/stats').then(({ data }) => {
-        setAllStats(data.stats || []);
-      }).catch(console.error).finally(() => setLoading(false));
+    async function load() {
+      try {
+        if (id) {
+          const { data } = await api.get(`/analytics/assignments/${id}`);
+          setAnalytics(data);
+        } else {
+          const { data } = await api.get('/analytics/stats');
+          setAllStats(data.stats || []);
+        }
+      } catch (err) {
+        console.error('Failed to load analytics:', err);
+      } finally {
+        setLoading(false);
+      }
     }
+    load();
   }, [id, refreshTrigger]);
 
-  const handleEvaluate = async (e) => {
+  const handleEvaluate = useCallback((group, member) => {
+    setEvalModal({
+      isOpen: true,
+      submissionId: group.submission_id,
+      groupName: group.name,
+      targetName: member ? member.full_name : `Group: ${group.name}`,
+      userId: member?.user_id || null,
+      status: 'accepted',
+      feedback: '',
+      submitting: false,
+    });
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setEvalModal(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
+  const submitEvaluation = async (e) => {
     e.preventDefault();
-    setEvalModal(p => ({ ...p, submitting: true }));
+    setEvalModal(prev => ({ ...prev, submitting: true }));
     try {
-      await api.post(`/submissions/${evalModal.submissionId}/review`, {
-        evaluationStatus: evalModal.status,
-        feedback: evalModal.feedback,
-        userId: evalModal.userId
-      });
-      setEvalModal({ isOpen: false, submissionId: null, groupName: '', targetName: '', userId: null, status: 'accepted', feedback: '', submitting: false });
-      setRefreshTrigger(p => p + 1); // reload data
+      const payload = { status: evalModal.status, feedback: evalModal.feedback };
+      if (evalModal.userId) payload.userId = evalModal.userId;
+      await api.post(`/submissions/${evalModal.submissionId}/review`, payload);
+      setEvalModal(prev => ({ ...prev, isOpen: false }));
+      setRefreshTrigger(prev => prev + 1);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to submit evaluation');
-      setEvalModal(p => ({ ...p, submitting: false }));
+      console.error('Review failed:', err);
+      setEvalModal(prev => ({ ...prev, submitting: false }));
     }
   };
 
@@ -150,195 +193,193 @@ export default function Analytics() {
     return <PageShell title="Analytics"><div className="flex justify-center py-20"><Spinner /></div></PageShell>;
   }
 
-  // Assignment-specific view
   if (id && analytics) {
-    const { assignment, groups, ungroupedStudents, summary } = analytics;
-    const ragColors = { green: '#10B981', amber: '#F59E0B', red: '#EF4444' };
-
-    const chartData = [
-      { name: 'Submitted', value: summary.submitted, color: ragColors.green },
-      { name: 'In Progress', value: summary.inProgress, color: ragColors.amber },
-      { name: 'At Risk', value: summary.atRisk, color: ragColors.red },
-    ];
+    const { assignment, groups = [], ungrouped_students: ungroupedStudents = [] } = analytics;
+    const totalGroups = groups.length;
+    const submittedGroups = groups.reduce(
+      (acc, g) => acc + (g.submission_status === 'submitted' ? 1 : 0),
+      0
+    );
 
     return (
       <PageShell
         title={assignment.title}
-        subtitle="Submission analytics and group tracking"
+        subtitle={`Due ${dateFmt.format(new Date(assignment.due_date))}`}
+        action={
+          <Link to="/admin/analytics" className="btn-secondary btn-sm">
+            <ArrowLeft size={14} aria-hidden="true" />
+            All Analytics
+          </Link>
+        }
       >
-        {/* Summary stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <StatCard label="Total Groups" value={summary.totalGroups} />
-          <StatCard label="Submitted" value={summary.submitted} />
-          <StatCard label="In Progress" value={summary.inProgress} />
-          <StatCard label="At Risk" value={summary.atRisk} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Total Groups" value={totalGroups} />
+          <StatCard label="Submitted" value={submittedGroups} sublabel={`of ${totalGroups} groups`} />
+          <StatCard label="Completion" value={totalGroups > 0 ? `${Math.round((submittedGroups / totalGroups) * 100)}%` : '0%'} />
+          <StatCard label="Ungrouped" value={ungroupedStudents.length} sublabel="students" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chart */}
-          <div className="lg:col-span-1 card p-4">
-            <h3 className="text-sm font-semibold mb-4">Status Distribution</h3>
-            {summary.totalGroups > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 10 }}>
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#fff',
-                      border: '1px solid #E4E4E7',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-sm text-text-tertiary text-center py-8">No groups to display</p>
-            )}
-          </div>
-
-          {/* Group breakdown table */}
-          <div className="lg:col-span-2">
-            <h3 className="text-sm font-semibold mb-3">Group Breakdown</h3>
-            {groups.length === 0 ? (
-              <EmptyState icon="👥" title="No groups formed yet" />
-            ) : (
-              <div className="card overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-surface-tertiary/50">
-                      <th className="text-left px-4 py-2 w-8"></th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider w-8">⬤</th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider">Group</th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider">Leader</th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider">Members</th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider">Status</th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider">Submitted At</th>
-                      <th className="text-left px-4 py-2 font-medium text-text-secondary text-[10px] uppercase tracking-wider">Evaluate</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {groups.map((g) => (
-                      <GroupRow key={g.id} g={g} setEvalModal={setEvalModal} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Ungrouped students */}
-        {ungroupedStudents.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold mb-3 text-status-danger">
-              ⚠ Students Without a Group ({ungroupedStudents.length})
-            </h3>
-            <div className="card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-red-50/50">
-                    <th className="text-left px-4 py-2 font-medium text-red-700 text-xs uppercase tracking-wider">Name</th>
-                    <th className="text-left px-4 py-2 font-medium text-red-700 text-xs uppercase tracking-wider">Email</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {ungroupedStudents.map((s) => (
-                    <tr key={s.id} className="hover:bg-red-50/30">
-                      <td className="px-4 py-2.5">{s.full_name}</td>
-                      <td className="px-4 py-2.5 text-text-secondary">{s.email}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {groups.length === 0 ? (
+          <EmptyState icon={Users} title="No groups formed yet" />
+        ) : (
+          <div className="card overflow-hidden mb-8">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-surface-overlay/50">
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Group</th>
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Submitted</th>
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Evaluation</th>
+                  <th className="px-5 py-3 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {groups.map((g) => (
+                  <GroupRow key={g.id} group={g} onEvaluate={handleEvaluate} />
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* Evaluation Modal */}
-        {evalModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-semibold mb-1">Evaluate {evalModal.targetName === 'Whole Group' ? 'Group Submission' : 'Individual'}</h2>
-              <div className="text-sm text-text-secondary mb-4 space-y-1">
-                <p>Group: <span className="font-semibold text-text-primary">{evalModal.groupName}</span></p>
-                <p>Target: <span className="font-semibold text-brand-600 bg-brand-50 px-2 py-0.5 mt-1 rounded inline-block">{evalModal.targetName}</span></p>
-              </div>
-              
-              <form onSubmit={handleEvaluate} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Action</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => setEvalModal(p => ({ ...p, status: 'accepted' }))} className={`px-3 py-2 text-sm rounded-md border transition-colors ${evalModal.status === 'accepted' ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-border text-text-secondary hover:bg-surface-hover'}`}>Accept</button>
-                    <button type="button" onClick={() => setEvalModal(p => ({ ...p, status: 'rejected' }))} className={`px-3 py-2 text-sm rounded-md border transition-colors ${evalModal.status === 'rejected' ? 'border-red-500 bg-red-50 text-red-700 font-medium' : 'border-border text-text-secondary hover:bg-surface-hover'}`}>Reject</button>
+        {ungroupedStudents.length > 0 ? (
+          <div className="card overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 bg-surface-overlay/50 border-b border-border">
+              <AlertTriangle size={14} className="text-semantic-warning" aria-hidden="true" />
+              <span className="text-meta font-medium text-text-primary">
+                Students Without a Group ({ungroupedStudents.length})
+              </span>
+            </div>
+            <div className="divide-y divide-border">
+              {ungroupedStudents.map((s) => (
+                <div key={s.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="w-7 h-7 rounded-full bg-surface-overlay flex items-center justify-center text-label font-medium text-text-secondary">
+                    {s.full_name?.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-meta font-medium text-text-primary truncate">{s.full_name}</p>
+                    <p className="text-label text-text-tertiary truncate">{s.email}</p>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Feedback (Optional)</label>
-                  <textarea
-                    className="input-field min-h-[100px]"
-                    placeholder="Provide feedback to the students..."
-                    value={evalModal.feedback}
-                    onChange={(e) => setEvalModal(p => ({ ...p, feedback: e.target.value }))}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 mt-6">
-                  <button type="button" onClick={() => setEvalModal(p => ({ ...p, isOpen: false }))} className="btn-secondary">Cancel</button>
-                  <button type="submit" className="btn-primary" disabled={evalModal.submitting}>
-                    {evalModal.submitting ? 'Saving...' : 'Save Evaluation'}
-                  </button>
-                </div>
-              </form>
+              ))}
             </div>
           </div>
-        )}
+        ) : null}
+
+        <Modal isOpen={evalModal.isOpen} onClose={closeModal} title="Review Submission">
+          <form onSubmit={submitEvaluation} className="space-y-5">
+            <div>
+              <p className="text-label text-text-tertiary uppercase tracking-widest mb-1">Reviewing</p>
+              <p className="text-body font-medium text-text-primary">{evalModal.targetName}</p>
+              <p className="text-meta text-text-secondary mt-0.5">{evalModal.groupName}</p>
+            </div>
+
+            <div>
+              <label className="block text-meta font-medium text-text-primary mb-2">Decision</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['accepted', 'rejected'].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setEvalModal(prev => ({ ...prev, status: s }))}
+                    className={`px-4 text-meta font-medium rounded-xl border transition-all duration-200 capitalize ${
+                      evalModal.status === s
+                        ? s === 'accepted'
+                          ? 'border-semantic-success/30 bg-semantic-success/10 text-semantic-success'
+                          : 'border-semantic-danger/30 bg-semantic-danger/10 text-semantic-danger'
+                        : 'border-border-strong text-text-secondary hover:bg-surface-overlay'
+                    }`}
+                    style={{ height: '40px' }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-meta font-medium text-text-primary mb-2" htmlFor="eval-feedback">Feedback</label>
+              <textarea
+                id="eval-feedback"
+                name="feedback"
+                className="input-field min-h-[100px] resize-y"
+                placeholder="Provide constructive feedback…"
+                value={evalModal.feedback}
+                onChange={(e) => setEvalModal(prev => ({ ...prev, feedback: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={closeModal} className="btn-secondary">Cancel</button>
+              <button type="submit" className="btn-primary" disabled={evalModal.submitting}>
+                {evalModal.submitting ? 'Submitting…' : 'Submit Review'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       </PageShell>
     );
   }
 
-  // All assignments analytics overview
   return (
-    <PageShell title="Analytics" subtitle="Submission tracking across all assignments">
+    <PageShell title="Analytics" subtitle="Submission statistics across all assignments">
       {allStats.length === 0 ? (
-        <EmptyState icon="📊" title="No data yet" description="Create assignments to see analytics." />
+        <EmptyState icon={BarChart3} title="No data yet" description="Create assignments to see analytics." />
       ) : (
-        <div className="space-y-3">
-          {allStats.map((s) => {
-            const total = parseInt(s.total_submissions) || 0;
-            const submitted = parseInt(s.submitted_count) || 0;
-            const inProgress = parseInt(s.in_progress_count) || 0;
-            const pending = parseInt(s.pending_count) || 0;
+        <div className="space-y-8">
+          <div className="card p-6">
+            <h2 className="text-section text-text-primary mb-5">Submissions by Assignment</h2>
+            <div style={{ height: 320 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={allStats} barSize={28} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
+                  <XAxis dataKey="title" tick={xAxisTick} tickLine={false} axisLine={axisLineStyle} />
+                  <YAxis tick={yAxisTick} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(0,85,255,0.04)' }} />
+                  <Bar name="Submitted" dataKey="submitted_count" fill="#0055FF" radius={[6, 6, 0, 0]} />
+                  <Bar name="Total" dataKey="total_groups" fill="rgba(0,0,0,0.06)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-            return (
-              <Link
-                key={s.id}
-                to={`/admin/analytics/${s.id}`}
-                className="card p-4 flex items-center justify-between hover:bg-surface-hover transition-colors"
-              >
-                <div>
-                  <p className="text-sm font-medium">{s.title}</p>
-                  <p className="text-xs text-text-tertiary mt-0.5">
-                    Due {new Date(s.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                    {' · '}{s.group_count} groups
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center gap-1.5"><RagDot status="green" /> {submitted}</span>
-                  <span className="flex items-center gap-1.5"><RagDot status="amber" /> {inProgress}</span>
-                  <span className="flex items-center gap-1.5"><RagDot status="red" /> {pending}</span>
-                  <span className="text-text-tertiary">→</span>
-                </div>
-              </Link>
-            );
-          })}
+          <div className="card overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-surface-overlay/50">
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Assignment</th>
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Groups</th>
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Submitted</th>
+                  <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">Rate</th>
+                  <th className="px-5 py-3 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {allStats.map((s) => {
+                  const rate = s.total_groups > 0 ? Math.round((s.submitted_count / s.total_groups) * 100) : 0;
+                  return (
+                    <tr key={s.id} className="hover:bg-surface-overlay/50 transition-colors">
+                      <td className="px-5 py-4 text-body font-medium text-text-primary">{s.title}</td>
+                      <td className="px-5 py-4 font-mono text-meta text-text-secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>{s.total_groups}</td>
+                      <td className="px-5 py-4 font-mono text-meta text-text-secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>{s.submitted_count}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-1 bg-surface-overlay rounded-full overflow-hidden">
+                            <div className="h-full bg-accent rounded-full" style={{ width: `${rate}%` }} />
+                          </div>
+                          <span className="text-label text-text-tertiary font-mono" style={{ fontVariantNumeric: 'tabular-nums' }}>{rate}%</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <Link to={`/admin/analytics/${s.id}`} className="text-meta text-accent hover:text-accent-hover font-medium transition-colors">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </PageShell>

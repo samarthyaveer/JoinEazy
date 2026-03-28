@@ -19,8 +19,8 @@ router.get(
   submissionController.getByAssignment
 );
 
-// Get submission details
-router.get('/:id', authenticate, submissionController.getSubmission);
+// Get submission details (admin only — students get their data via assignment details)
+router.get('/:id', authenticate, authorize('admin'), submissionController.getSubmission);
 
 // Gate 1: Track link click
 router.post(

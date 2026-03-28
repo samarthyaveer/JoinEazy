@@ -4,15 +4,15 @@ const { NotFoundError, ForbiddenError } = require('../utils/errors');
 /**
  * Create a new assignment (admin only).
  */
-async function createAssignment({ title, description, dueDate, onedriveLink, targetType, maxGroupSize, groupIds, createdBy }) {
+async function createAssignment({ title, description, dueDate, onedriveLink, maxGroupSize, createdBy }) {
   const client = await getClient();
 
   try {
     await client.query('BEGIN');
 
     const result = await client.query(
-      `INSERT INTO assignments (title, description, due_date, onedrive_link, target_type, max_group_size, created_by)
-       VALUES ($1, $2, $3, $4, 'all', $5, $6)
+      `INSERT INTO assignments (title, description, due_date, onedrive_link, max_group_size, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [title, description, dueDate, onedriveLink, maxGroupSize || 4, createdBy]
     );

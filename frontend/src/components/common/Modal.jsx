@@ -1,52 +1,91 @@
-import { useState } from 'react';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useCallback } from 'react';
+import { gsap, prefersReducedMotion, EASE } from '../../lib/gsapConfig';
+import X from 'lucide-react/dist/esm/icons/x';
+
+const sizeClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+};
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   const overlayRef = useRef(null);
+  const modalRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
     const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden';
+
+    document.addEventListener('keydown', handleEsc);
+    document.body.style.overflow = 'hidden';
+
+    // GSAP entrance — overlay fade + modal scale/y (transforms only)
+    if (!prefersReducedMotion) {
+      if (overlayRef.current) {
+        gsap.from(overlayRef.current, {
+          opacity: 0,
+          duration: 0.25,
+          ease: EASE.out,
+        });
+      }
+      if (modalRef.current) {
+        gsap.from(modalRef.current, {
+          opacity: 0,
+          scale: 0.96,
+          y: 16,
+          duration: 0.35,
+          ease: EASE.back,
+        });
+      }
     }
+
     return () => {
       document.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
+
+  const handleOverlayClick = useCallback((e) => {
+    if (e.target === overlayRef.current) onCloseRef.current();
+  }, []);
 
   if (!isOpen) return null;
-
-  const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-  };
 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-      onClick={(e) => e.target === overlayRef.current && onClose()}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-6"
+      style={{ background: 'rgba(0, 0, 0, 0.2)', backdropFilter: 'blur(6px)', overscrollBehavior: 'contain' }}
+      onClick={handleOverlayClick}
     >
-      <div className={`w-full ${sizeClasses[size]} bg-surface-secondary rounded-lg border shadow-lg`}>
+      <div
+        ref={modalRef}
+        className={`w-full ${sizeClasses[size]} rounded-2xl shadow-modal`}
+        style={{
+          background: '#FFFFFF',
+          border: '1px solid rgba(0, 0, 0, 0.06)',
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b">
-          <h3 className="text-sm font-semibold">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+          <h3 className="text-section text-text-primary">{title}</h3>
           <button
             onClick={onClose}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-tertiary text-text-tertiary hover:text-text-primary transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-surface-overlay text-text-tertiary hover:text-text-primary transition-colors"
+            aria-label="Close"
           >
-            ✕
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="px-5 py-4">
+        <div className="px-6 py-5">
           {children}
         </div>
       </div>
