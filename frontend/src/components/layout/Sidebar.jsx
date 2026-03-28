@@ -1,194 +1,133 @@
-import { useCallback, useState, useRef, useLayoutEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { gsap, prefersReducedMotion, DURATION, EASE } from '../../lib/gsapConfig';
+import { useAuth } from '@/context/AuthContext';
 import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard';
 import FileText from 'lucide-react/dist/esm/icons/file-text';
 import Users from 'lucide-react/dist/esm/icons/users';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 import LogOut from 'lucide-react/dist/esm/icons/log-out';
+import X from 'lucide-react/dist/esm/icons/x';
 
-const studentLinks = [
+const STUDENT_LINKS = [
   { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { to: '/assignments', label: 'Assignments', icon: FileText },
   { to: '/my-groups', label: 'Groups', icon: Users },
 ];
 
-const adminLinks = [
+const ADMIN_LINKS = [
   { to: '/admin', label: 'Home', icon: LayoutDashboard },
   { to: '/admin/assignments', label: 'Assignments', icon: FileText },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
-function DockItem({ to, label, icon: Icon, end }) {
-  return (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        `dock-item group relative flex items-center justify-center rounded-2xl transition-all duration-200 ${
-          isActive
-            ? 'bg-text-primary text-text-inverse'
-            : 'text-text-secondary hover:text-text-primary hover:bg-surface-overlay'
-        }`
-      }
-      style={{ width: '48px', height: '48px' }}
-      aria-label={label}
-    >
-      {({ isActive }) => (
-        <>
-          <Icon size={20} strokeWidth={isActive ? 2 : 1.5} aria-hidden="true" />
-          {/* Tooltip */}
-          <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-label text-text-inverse bg-text-primary shadow-card opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
-            {label}
-          </span>
-        </>
-      )}
-    </NavLink>
-  );
-}
-
-export default function BottomDock() {
+/**
+ * Sidebar navigation component (desktop fixed, mobile drawer).
+ * @param {Object} props
+ * @param {boolean} props.isOpen - For mobile, controls the drawer open state
+ * @param {Function} props.onClose - For mobile, closes the drawer
+ */
+export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const links = user?.role === 'admin' ? adminLinks : studentLinks;
-  const [showProfile, setShowProfile] = useState(false);
-  const dockRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const links = user?.role === 'admin' ? ADMIN_LINKS : STUDENT_LINKS;
 
-  // Dock entrance animation — spring slide-up
-  useLayoutEffect(() => {
-    if (prefersReducedMotion || !dockRef.current) return;
-
-    const ctx = gsap.context(() => {
-      gsap.from(dockRef.current, {
-        y: 80,
-        opacity: 0,
-        duration: DURATION.NORMAL,
-        delay: 0.5,
-        ease: EASE.back,
-      });
-    });
-
-    return () => ctx.revert();
-  }, []);
-
-  // Profile dropdown animation
-  useLayoutEffect(() => {
-    if (prefersReducedMotion || !dropdownRef.current) return;
-
-    if (showProfile) {
-      gsap.from(dropdownRef.current, {
-        opacity: 0,
-        scale: 0.95,
-        y: 8,
-        duration: 0.25,
-        ease: EASE.back,
-      });
-    }
-  }, [showProfile]);
+  // Handle escape key to close mobile sidebar
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
 
   const handleLogout = useCallback(async () => {
     await logout();
     navigate('/login');
   }, [logout, navigate]);
 
-  return (
-    <nav
-      ref={dockRef}
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-2 rounded-[20px] shadow-dock"
-      style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-      }}
-      role="navigation"
-      aria-label="Main navigation"
-    >
-      {/* Logo */}
-      <div className="flex items-center justify-center px-1" style={{ width: '48px', height: '48px' }}>
-        <img src="/joineazy.png" alt="JoinEazy" width={26} height={26} />
+  const sidebarContent = (
+    <div className="flex flex-col h-full bg-surface border-r border-border">
+      {/* Brand Header */}
+      <div className="flex items-center justify-between h-14 md:h-16 px-6 shrink-0 border-b border-border lg:border-transparent">
+        <div className="flex items-center gap-3">
+          <img src="/joineazy.png" alt="JoinEazy Logo" width={28} height={28} />
+          <span className="text-body font-bold text-text-primary">JoinEazy</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="lg:hidden p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-overlay rounded-xl transition-colors"
+          aria-label="Close sidebar"
+        >
+          <X size={20} />
+        </button>
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-6 mx-0.5" style={{ background: 'rgba(0,0,0,0.08)' }} />
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+        {links.map((link) => {
+          const Icon = link.icon;
+          const isExact = link.to === '/dashboard' || link.to === '/admin';
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={isExact}
+              onClick={() => { if(window.innerWidth < 1024) onClose(); }}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-meta font-medium ${
+                  isActive
+                    ? 'bg-accent/10 border-l-4 border-accent text-accent'
+                    : 'text-text-secondary hover:bg-surface-overlay hover:text-text-primary border-l-4 border-transparent'
+                }`
+              }
+            >
+              <Icon size={20} strokeWidth={1.5} />
+              {link.label}
+            </NavLink>
+          );
+        })}
+      </nav>
 
-      {links.map((link) => (
-        <DockItem
-          key={link.to}
-          to={link.to}
-          label={link.label}
-          icon={link.icon}
-          end={link.to === '/dashboard' || link.to === '/admin'}
-        />
-      ))}
-
-      {/* Divider */}
-      <div className="w-px h-6 mx-0.5" style={{ background: 'rgba(0,0,0,0.08)' }} />
-
-      {/* Profile button */}
-      <div className="relative">
-        <button
-          onClick={() => setShowProfile(prev => !prev)}
-          className={`dock-item group relative flex items-center justify-center rounded-2xl transition-all duration-200 ${
-            showProfile
-              ? 'bg-text-primary text-text-inverse'
-              : 'text-text-secondary hover:text-text-primary hover:bg-surface-overlay'
-          }`}
-          style={{ width: '48px', height: '48px' }}
-          aria-label="Profile menu"
-          aria-expanded={showProfile}
-        >
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-label font-semibold"
-            style={{
-              background: showProfile ? 'rgba(255,255,255,0.2)' : 'rgba(0,85,255,0.1)',
-              color: showProfile ? '#FFFFFF' : '#0055FF',
-            }}
-          >
+      {/* User Profile / Logout footer */}
+      <div className="p-4 border-t border-border shrink-0">
+        <div className="flex items-center gap-3 px-2 py-3 mb-2 rounded-xl">
+          <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-body font-bold text-accent shrink-0">
             {user?.full_name?.charAt(0)?.toUpperCase() || '?'}
           </div>
-          <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-label text-text-inverse bg-text-primary shadow-card opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
-            Profile
-          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-meta font-medium text-text-primary truncate">{user?.full_name}</p>
+            <p className="text-label text-text-tertiary mt-0.5">{user?.role === 'admin' ? 'Professor' : 'Student'}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-overlay hover:text-semantic-danger transition-colors text-meta font-medium"
+        >
+          <LogOut size={20} strokeWidth={1.5} />
+          Sign Out
         </button>
-
-        {/* Profile dropdown */}
-        {showProfile ? (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowProfile(false)} />
-            <div
-              ref={dropdownRef}
-              className="absolute bottom-16 right-0 z-50 w-56 rounded-2xl p-1.5 shadow-modal"
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
-              }}
-            >
-              {/* User info */}
-              <div className="flex items-center gap-3 px-3 py-3 border-b border-border">
-                <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-label font-bold text-accent flex-shrink-0">
-                  {user?.full_name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-meta font-medium text-text-primary truncate">{user?.full_name}</p>
-                  <p className="text-label text-text-tertiary mt-0.5">{user?.role === 'admin' ? 'Professor' : 'Student'}</p>
-                </div>
-              </div>
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2.5 w-full px-3 py-2.5 mt-1 rounded-xl text-text-secondary hover:bg-surface-overlay hover:text-semantic-danger transition-colors text-meta"
-              >
-                <LogOut size={14} aria-hidden="true" />
-                Sign Out
-              </button>
-            </div>
-          </>
-        ) : null}
       </div>
-    </nav>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Drawer Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside
+        className={`fixed top-0 bottom-0 left-0 z-50 w-[280px] bg-surface transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-[240px] shrink-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

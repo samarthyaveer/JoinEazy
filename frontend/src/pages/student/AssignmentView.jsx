@@ -5,11 +5,11 @@ import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
 import Circle from 'lucide-react/dist/esm/icons/circle';
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
-import PageShell from '../../components/layout/PageShell';
-import Modal from '../../components/common/Modal';
-import { StatusBadge, Spinner, EmptyState } from '../../components/common/UIComponents';
-import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import PageShell from '@/components/layout/PageShell';
+import Modal from '@/components/common/Modal';
+import { StatusBadge, Spinner, EmptyState } from '@/components/common/UIComponents';
+import { studentApi } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 
 const STATUS_ORDER = ['pending', 'link_visited', 'awaiting_confirmation', 'submitted'];
 const dateFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -38,7 +38,7 @@ export default function AssignmentView() {
 
   const loadAssignment = useCallback(async () => {
     try {
-      const { data } = await api.get(`/assignments/${id}`);
+      const { data } = await studentApi.getAssignmentById(id);
       setAssignment(data.assignment);
     } catch (err) {
       setError('Failed to load assignment. Please try refreshing.');
@@ -60,12 +60,12 @@ export default function AssignmentView() {
     e.preventDefault();
     setCreating(true);
     try {
-      await api.post(`/groups/assignment/${id}`, { name: groupName });
+      await studentApi.createGroup(id, { name: groupName });
       setShowCreateGroup(false);
       setGroupName('');
       await loadAssignment();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create group. Try a different name.');
+      setError(err?.message || err.response?.data?.error || 'Failed to create group. Try a different name.');
     } finally {
       setCreating(false);
     }
@@ -76,12 +76,12 @@ export default function AssignmentView() {
     setAddingMember(true);
     setMemberMsg({ type: '', text: '' });
     try {
-      const { data } = await api.post(`/groups/${myGroup.id}/members`, { email: addEmail });
+      const { data } = await studentApi.addGroupMember(myGroup.id, { email: addEmail });
       setMemberMsg({ type: 'success', text: data.message });
       setAddEmail('');
       await loadAssignment();
     } catch (err) {
-      setMemberMsg({ type: 'error', text: err.response?.data?.error || 'Failed to add member. Check the email address.' });
+      setMemberMsg({ type: 'error', text: err?.message || err.response?.data?.error || 'Failed to add member. Check the email address.' });
     } finally {
       setAddingMember(false);
     }
@@ -89,16 +89,16 @@ export default function AssignmentView() {
 
   const handleRemoveMember = async (userId) => {
     try {
-      await api.delete(`/groups/${myGroup.id}/members/${userId}`);
+      await studentApi.removeGroupMember(myGroup.id, userId);
       await loadAssignment();
     } catch (err) {
-      setMemberMsg({ type: 'error', text: err.response?.data?.error || 'Failed to remove member.' });
+      setMemberMsg({ type: 'error', text: err?.message || err.response?.data?.error || 'Failed to remove member.' });
     }
   };
 
   const handleTrackClick = async () => {
     try {
-      await api.post(`/submissions/${submission.id}/track-click`);
+      await studentApi.trackSubmissionClick(submission.id);
       window.open(assignment.onedrive_link, '_blank');
       await loadAssignment();
     } catch (err) {
@@ -109,12 +109,12 @@ export default function AssignmentView() {
   const handleInitiate = async () => {
     setSubMsg('');
     try {
-      const { data } = await api.post(`/submissions/${submission.id}/initiate`);
+      const { data } = await studentApi.initiateSubmission(submission.id);
       setSubmissionToken(data.token);
       setShowConfirm(true);
       await loadAssignment();
     } catch (err) {
-      setSubMsg(err.response?.data?.error || 'Failed to initiate. Try again.');
+      setSubMsg(err?.message || err.response?.data?.error || 'Failed to initiate. Try again.');
     }
   };
 
@@ -123,7 +123,7 @@ export default function AssignmentView() {
     setSubmitting(true);
     setSubMsg('');
     try {
-      await api.post(`/submissions/${submission.id}/confirm`, {
+      await studentApi.confirmSubmission(submission.id, {
         token: submissionToken,
         assignmentTitle: confirmTitle,
       });
@@ -131,7 +131,7 @@ export default function AssignmentView() {
       setConfirmTitle('');
       await loadAssignment();
     } catch (err) {
-      setSubMsg(err.response?.data?.error || 'Confirmation failed. Check the title and try again.');
+      setSubMsg(err?.message || err.response?.data?.error || 'Confirmation failed. Check the title and try again.');
     } finally {
       setSubmitting(false);
     }

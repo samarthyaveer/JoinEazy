@@ -1,8 +1,8 @@
 import { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { gsap, prefersReducedMotion, DURATION, EASE } from '../lib/gsapConfig';
-import { useMagnetic } from '../hooks/useGsap';
+import { useAuth } from '@/context/AuthContext';
+import { gsap, prefersReducedMotion, DURATION, EASE } from '@/lib/gsapConfig';
+import { useMagnetic } from '@/hooks/useGsap';
 
 export default function AuthPage() {
   const { login, register: registerUser } = useAuth();
@@ -36,7 +36,7 @@ export default function AuthPage() {
 
     // Overlay slides from one side to the other
     tl.to(overlayRef.current, {
-      x: toRegister ? '-100%' : '0%',
+      xPercent: toRegister ? -100 : 0,
       duration: 0.8,
       ease: 'power4.inOut',
     });
@@ -72,6 +72,11 @@ export default function AuthPage() {
     if (prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
+      // Set initial state to prevent React inline style fight
+      if (overlayRef.current) {
+        gsap.set(overlayRef.current, { xPercent: isRegister ? -100 : 0 });
+      }
+
       const tl = gsap.timeline({ defaults: { ease: EASE.out } });
 
       // Container scale in
@@ -135,7 +140,7 @@ export default function AuthPage() {
       const user = await login(loginForm.email, loginForm.password);
       navigate(user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid credentials.');
+      setError(err.message || 'Invalid credentials.');
     } finally {
       setLoading(false);
     }
@@ -163,7 +168,7 @@ export default function AuthPage() {
       });
       navigate(user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed.');
+      setError(err.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -173,13 +178,6 @@ export default function AuthPage() {
   const roleIndicatorRef = useRef(null);
   const handleRoleChange = useCallback((role) => {
     setRegForm(prev => ({ ...prev, role }));
-    if (!prefersReducedMotion && roleIndicatorRef.current) {
-      gsap.to(roleIndicatorRef.current, {
-        x: role === 'student' ? 0 : '100%',
-        duration: 0.35,
-        ease: EASE.back,
-      });
-    }
   }, []);
 
   return (
@@ -209,17 +207,16 @@ export default function AuthPage() {
       {/* Main auth container */}
       <div
         ref={containerRef}
-        className="relative w-full max-w-[920px] min-h-[580px] rounded-3xl overflow-hidden shadow-modal"
+        className="relative w-full max-w-md lg:max-w-[920px] lg:min-h-[580px] rounded-2xl lg:rounded-3xl overflow-hidden shadow-modal"
         style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)' }}
       >
-        {/* Two form panels side by side */}
-        <div className="flex min-h-[580px]">
+        {/* Two form panels side by side on desktop, stacked/hidden on mobile */}
+        <div className="flex flex-col lg:flex-row lg:min-h-[580px]">
           {/* LEFT: Sign In Form */}
           <div
-            className="w-1/2 flex items-center justify-center p-10 lg:p-14"
-            style={{ opacity: isRegister ? 0.4 : 1, pointerEvents: isRegister ? 'none' : 'auto', transition: 'opacity 0.4s ease' }}
+            className={`w-full lg:w-1/2 items-center justify-center p-6 sm:p-10 lg:p-14 transition-opacity duration-400 ${isRegister ? 'hidden lg:flex lg:opacity-40 lg:pointer-events-none' : 'flex opacity-100 pointer-events-auto'}`}
           >
-            <div ref={loginFormRef} className="w-full max-w-xs">
+            <div ref={loginFormRef} className="w-full max-w-sm mx-auto">
               <h2 className="text-page text-text-primary mb-2 form-field">Sign In</h2>
               <p className="text-body text-text-secondary mb-8 form-field">Welcome back to JoinEazy</p>
 
@@ -243,19 +240,18 @@ export default function AuthPage() {
                 </div>
               </form>
 
-              <p className="text-meta text-text-secondary text-center mt-8 form-field">
+              <p className="lg:hidden text-meta text-text-secondary text-center mt-8 form-field">
                 Don't have an account?{' '}
-                <button onClick={toggleMode} className="text-accent font-medium hover:text-accent-hover transition-colors">Sign Up</button>
+                <button onClick={toggleMode} type="button" className="text-accent font-medium hover:text-accent-hover transition-colors">Sign Up</button>
               </p>
             </div>
           </div>
 
           {/* RIGHT: Register Form */}
           <div
-            className="w-1/2 flex items-center justify-center p-10 lg:p-14"
-            style={{ opacity: !isRegister ? 0.4 : 1, pointerEvents: !isRegister ? 'none' : 'auto', transition: 'opacity 0.4s ease' }}
+            className={`w-full lg:w-1/2 items-center justify-center p-6 sm:p-10 lg:p-14 transition-opacity duration-400 ${!isRegister ? 'hidden lg:flex lg:opacity-40 lg:pointer-events-none' : 'flex opacity-100 pointer-events-auto'}`}
           >
-            <div ref={registerFormRef} className="w-full max-w-xs">
+            <div ref={registerFormRef} className="w-full max-w-sm mx-auto">
               <h2 className="text-page text-text-primary mb-2 form-field">Create Account</h2>
               <p className="text-body text-text-secondary mb-8 form-field">Join as student or professor</p>
 
@@ -308,21 +304,21 @@ export default function AuthPage() {
                 </div>
               </form>
 
-              <p className="text-meta text-text-secondary text-center mt-6 form-field">
+              <p className="lg:hidden text-meta text-text-secondary text-center mt-6 form-field">
                 Already have an account?{' '}
-                <button onClick={toggleMode} className="text-accent font-medium hover:text-accent-hover transition-colors">Sign In</button>
+                <button onClick={toggleMode} type="button" className="text-accent font-medium hover:text-accent-hover transition-colors">Sign In</button>
               </p>
             </div>
           </div>
         </div>
 
-        {/* GSAP Sliding Overlay Panel — the branding panel that slides */}
+        {/* GSAP Sliding Overlay Panel — the branding panel that slides (Desktop Only) */}
         <div
           ref={overlayRef}
-          className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-center p-12 z-20"
+          className="hidden lg:flex absolute inset-y-0 right-0 w-1/2 items-center justify-center p-12 z-20"
           style={{
             background: '#0F0F0F',
-            transform: isRegister ? 'translateX(-100%)' : 'translateX(0%)',
+            transform: prefersReducedMotion ? (isRegister ? 'translateX(-100%)' : 'translateX(0%)') : undefined,
             transition: prefersReducedMotion ? 'none' : undefined,
             willChange: 'transform',
           }}

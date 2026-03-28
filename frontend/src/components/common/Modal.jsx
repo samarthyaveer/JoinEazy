@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useCallback } from 'react';
-import { gsap, prefersReducedMotion, EASE } from '../../lib/gsapConfig';
+import { gsap, prefersReducedMotion, EASE } from '@/lib/gsapConfig';
 import X from 'lucide-react/dist/esm/icons/x';
 
 const sizeClasses = {

@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Users from 'lucide-react/dist/esm/icons/users';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
-import PageShell from '../../components/layout/PageShell';
-import { StatusBadge, EmptyState, Spinner } from '../../components/common/UIComponents';
-import { useStagger } from '../../hooks/useGsap';
-import api from '../../services/api';
+import PageShell from '@/components/layout/PageShell';
+import { StatusBadge, EmptyState, Spinner } from '@/components/common/UIComponents';
+import { useStagger } from '@/hooks/useGsap';
+import { studentApi } from '@/services/api';
 
 export default function MyGroups() {
   const [groups, setGroups] = useState([]);
@@ -14,7 +14,7 @@ export default function MyGroups() {
   const tableRef = useStagger({ selector: 'tbody tr', stagger: 0.05, y: 16, delay: 0.2 });
 
   useEffect(() => {
-    api.get('/groups/my').then((res) => {
+    studentApi.getMyGroups().then((res) => {
       setGroups(res.data.groups || []);
     }).catch(console.error).finally(() => setLoading(false));
   }, []);

@@ -7,10 +7,10 @@ import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
-import PageShell from '../../components/layout/PageShell';
-import Modal from '../../components/common/Modal';
-import { RagDot, StatCard, EmptyState, Spinner } from '../../components/common/UIComponents';
-import api from '../../services/api';
+import PageShell from '@/components/layout/PageShell';
+import Modal from '@/components/common/Modal';
+import { RagDot, StatCard, EmptyState, Spinner } from '@/components/common/UIComponents';
+import { adminApi } from '@/services/api';
 
 // Hoisted for dark chart
 const tooltipStyle = {
@@ -142,10 +142,10 @@ export default function Analytics() {
     async function load() {
       try {
         if (id) {
-          const { data } = await api.get(`/analytics/assignments/${id}`);
+          const { data } = await adminApi.getAnalyticsAssignment(id);
           setAnalytics(data);
         } else {
-          const { data } = await api.get('/analytics/stats');
+          const { data } = await adminApi.getAnalyticsStats();
           setAllStats(data.stats || []);
         }
       } catch (err) {
@@ -180,7 +180,7 @@ export default function Analytics() {
     try {
       const payload = { status: evalModal.status, feedback: evalModal.feedback };
       if (evalModal.userId) payload.userId = evalModal.userId;
-      await api.post(`/submissions/${evalModal.submissionId}/review`, payload);
+      await adminApi.reviewSubmission(evalModal.submissionId, payload);
       setEvalModal(prev => ({ ...prev, isOpen: false }));
       setRefreshTrigger(prev => prev + 1);
     } catch (err) {

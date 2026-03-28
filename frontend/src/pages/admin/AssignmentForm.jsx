@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ExternalLink from 'lucide-react/dist/esm/icons/external-link';
-import PageShell from '../../components/layout/PageShell';
-import { Spinner } from '../../components/common/UIComponents';
-import { gsap, prefersReducedMotion, DURATION, EASE } from '../../lib/gsapConfig';
-import { useMagnetic } from '../../hooks/useGsap';
-import api from '../../services/api';
+import PageShell from '@/components/layout/PageShell';
+import { Spinner } from '@/components/common/UIComponents';
+import { gsap, prefersReducedMotion, DURATION, EASE } from '@/lib/gsapConfig';
+import { useMagnetic } from '@/hooks/useGsap';
+import { adminApi } from '@/services/api';
 
 export default function AssignmentForm() {
   const { id } = useParams();
@@ -49,7 +49,7 @@ export default function AssignmentForm() {
 
   useEffect(() => {
     if (isEdit) {
-      api.get(`/assignments/${id}`).then(({ data }) => {
+      adminApi.getAssignment(id).then(({ data }) => {
         const a = data.assignment;
         setForm({
           title: a.title,
@@ -70,9 +70,9 @@ export default function AssignmentForm() {
 
     try {
       if (isEdit) {
-        await api.put(`/assignments/${id}`, form);
+        await adminApi.updateAssignment(id, form);
       } else {
-        await api.post('/assignments', form);
+        await adminApi.createAssignment(form);
       }
       navigate('/admin/assignments');
     } catch (err) {

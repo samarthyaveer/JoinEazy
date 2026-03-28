@@ -1,6 +1,6 @@
 import { useRef, useLayoutEffect } from 'react';
 import Inbox from 'lucide-react/dist/esm/icons/inbox';
-import { gsap, prefersReducedMotion, DURATION, EASE } from '../../lib/gsapConfig';
+import { gsap, prefersReducedMotion, DURATION, EASE } from '@/lib/gsapConfig';
 
 const statusConfig = {
   pending:               { label: 'Pending',      className: 'badge-neutral' },
@@ -17,11 +17,21 @@ const ragColorMap = {
 
 const spinnerSizes = { sm: 'w-4 h-4', md: 'w-5 h-5', lg: 'w-8 h-8' };
 
+/**
+ * Renders a localized status badge.
+ * @param {Object} props
+ * @param {string} props.status - The status identifier
+ */
 export function StatusBadge({ status }) {
   const c = statusConfig[status] || statusConfig.pending;
   return <span className={c.className}>{c.label}</span>;
 }
 
+/**
+ * Renders a solid color dot for RAG status.
+ * @param {Object} props
+ * @param {string} props.status - The RAG color id (green, amber, red)
+ */
 export function RagDot({ status }) {
   return (
     <span
@@ -32,6 +42,12 @@ export function RagDot({ status }) {
   );
 }
 
+/**
+ * Progress bar component with GSAP entrance animation.
+ * @param {Object} props
+ * @param {number} props.value - The current integer value
+ * @param {number} [props.max=100] - The maximum integer value
+ */
 export function ProgressBar({ value, max = 100 }) {
   const pct = max > 0 ? Math.min(Math.round((value / max) * 100), 100) : 0;
   const barRef = useRef(null);
@@ -57,7 +73,7 @@ export function ProgressBar({ value, max = 100 }) {
       <div className="flex-1 h-1.5 bg-surface-overlay rounded-full overflow-hidden">
         <div
           ref={barRef}
-          className="h-full bg-accent rounded-full"
+          className="h-full bg-accent rounded-full transition-all duration-300"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -66,6 +82,14 @@ export function ProgressBar({ value, max = 100 }) {
   );
 }
 
+/**
+ * An empty state graphic + message for missing data.
+ * @param {Object} props
+ * @param {React.ElementType} [props.icon] - Lucide icon component
+ * @param {string} props.title - Empty state title
+ * @param {string} [props.description] - Empty state description
+ * @param {React.ReactNode} [props.action] - Action button or component to display below
+ */
 export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
   const iconRef = useRef(null);
 
@@ -86,7 +110,7 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div className="flex flex-col items-center justify-center py-20 text-center px-4">
       <div
         ref={iconRef}
         className="w-14 h-14 rounded-2xl bg-surface-overlay flex items-center justify-center mb-5"
@@ -94,15 +118,22 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
       >
         <Icon size={24} className="text-text-tertiary" strokeWidth={1.5} aria-hidden="true" />
       </div>
-      <h3 className="text-body font-semibold text-text-primary mb-1">{title}</h3>
-      {description ? (
-        <p className="text-meta text-text-secondary max-w-xs mb-6">{description}</p>
-      ) : null}
+      <h3 className="text-xl sm:text-body font-semibold text-text-primary mb-1">{title}</h3>
+      {description && (
+        <p className="text-sm sm:text-meta text-text-secondary max-w-sm mb-6">{description}</p>
+      )}
       {action}
     </div>
   );
 }
 
+/**
+ * Metric card with animated number increment.
+ * @param {Object} props
+ * @param {string} props.label - Tiny upper-cased top label
+ * @param {number|string} props.value - The metric value (can include text)
+ * @param {string} [props.sublabel] - Subtext directly underneath metric
+ */
 export function StatCard({ label, value, sublabel }) {
   const valueRef = useRef(null);
 
@@ -134,20 +165,25 @@ export function StatCard({ label, value, sublabel }) {
   }, [value]);
 
   return (
-    <div className="card px-6 py-6 group hover:shadow-card-hover">
-      <p className="text-label text-text-tertiary uppercase tracking-widest">{label}</p>
+    <div className="card px-4 sm:px-6 py-4 sm:py-6 group hover:shadow-card-hover transition-shadow">
+      <p className="text-xs sm:text-label text-text-tertiary uppercase tracking-widest">{label}</p>
       <p
         ref={valueRef}
-        className="text-[36px] font-bold text-text-primary mt-2 leading-none"
+        className="text-2xl sm:text-[36px] font-bold text-text-primary mt-2 leading-none"
         style={{ fontVariantNumeric: 'tabular-nums' }}
       >
         {prefersReducedMotion ? value : 0}
       </p>
-      {sublabel ? <p className="text-label text-text-tertiary mt-2">{sublabel}</p> : null}
+      {sublabel && <p className="text-xs sm:text-label text-text-tertiary mt-2">{sublabel}</p>}
     </div>
   );
 }
 
+/**
+ * Loading spinner standarding sizing sizes.
+ * @param {Object} props
+ * @param {'sm'|'md'|'lg'} [props.size='md'] - Spinner size
+ */
 export function Spinner({ size = 'md' }) {
   return (
     <div className={`${spinnerSizes[size]} border-2 border-accent/20 border-t-accent rounded-full animate-spin`} role="status" aria-label="Loading…">
