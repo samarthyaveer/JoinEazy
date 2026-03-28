@@ -7,13 +7,13 @@ const authController = require('../controllers/auth.controller');
 // Validation schemas
 const registerSchema = Joi.object({
   fullName: Joi.string().min(2).max(100).required(),
-  email: Joi.string().email().required(),
+  email: Joi.string().email().trim().lowercase().required(),
   password: Joi.string().min(6).max(128).required(),
   role: Joi.string().valid('student', 'admin').required(),
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string().email().trim().lowercase().required(),
   password: Joi.string().required(),
 });
 

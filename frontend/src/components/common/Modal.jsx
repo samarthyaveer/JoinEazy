@@ -1,15 +1,21 @@
-import { useLayoutEffect, useRef, useCallback } from 'react';
-import { gsap, prefersReducedMotion, EASE } from '@/lib/gsapConfig';
-import X from 'lucide-react/dist/esm/icons/x';
+import { useLayoutEffect, useRef, useCallback } from "react";
+import { gsap, prefersReducedMotion, EASE } from "@/lib/gsapConfig";
+import X from "lucide-react/dist/esm/icons/x";
 
 const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
 };
 
-export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+}) {
   const overlayRef = useRef(null);
   const modalRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -19,11 +25,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     if (!isOpen) return;
 
     const handleEsc = (e) => {
-      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === "Escape") onCloseRef.current();
     };
 
-    document.addEventListener('keydown', handleEsc);
-    document.body.style.overflow = 'hidden';
+    document.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = "hidden";
 
     // GSAP entrance — overlay fade + modal scale/y (transforms only)
     if (!prefersReducedMotion) {
@@ -46,8 +52,8 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -61,15 +67,19 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[60] flex items-center justify-center p-6"
-      style={{ background: 'rgba(0, 0, 0, 0.2)', backdropFilter: 'blur(6px)', overscrollBehavior: 'contain' }}
+      style={{
+        background: "rgba(0, 0, 0, 0.2)",
+        backdropFilter: "blur(6px)",
+        overscrollBehavior: "contain",
+      }}
       onClick={handleOverlayClick}
     >
       <div
         ref={modalRef}
         className={`w-full ${sizeClasses[size]} rounded-2xl shadow-modal`}
         style={{
-          background: '#FFFFFF',
-          border: '1px solid rgba(0, 0, 0, 0.06)',
+          background: "#FFFFFF",
+          border: "1px solid rgba(0, 0, 0, 0.06)",
         }}
       >
         {/* Header */}
@@ -85,9 +95,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5">
-          {children}
-        </div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );

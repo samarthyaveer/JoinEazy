@@ -1,6 +1,6 @@
 # JoinEazy
 
-[![Demo Video](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/YOUR_VIDEO_ID_HERE)
+[![Demo Video](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/Q-T3hWM4b6M)
 
 ![JoinEazy Application Screenshot](./frontend/src/assets/joineazy-ss.png)
 

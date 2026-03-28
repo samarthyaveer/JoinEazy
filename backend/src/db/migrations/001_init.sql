@@ -17,6 +17,21 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
+-- Normalize email to lowercase on insert/update
+CREATE OR REPLACE FUNCTION normalize_user_email()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.email = LOWER(TRIM(NEW.email));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_users_normalize_email ON users;
+CREATE TRIGGER trg_users_normalize_email
+    BEFORE INSERT OR UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION normalize_user_email();
+
 
 -- 2. ASSIGNMENTS
 -- Academic tasks created by professors

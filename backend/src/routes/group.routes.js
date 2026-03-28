@@ -11,7 +11,7 @@ const createGroupSchema = Joi.object({
 });
 
 const addMemberSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string().email().trim().lowercase().required(),
 });
 
 // Student's own groups

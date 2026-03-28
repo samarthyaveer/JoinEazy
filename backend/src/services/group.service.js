@@ -1,5 +1,10 @@
-const { query, getClient } = require('../config/db');
-const { NotFoundError, BadRequestError, ConflictError, ForbiddenError } = require('../utils/errors');
+const { query, getClient } = require("../config/db");
+const {
+  NotFoundError,
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+} = require("../utils/errors");
 
 /**
  * Create a group for an assignment.
@@ -9,12 +14,15 @@ async function createGroup({ name, assignmentId, userId }) {
   const client = await getClient();
 
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     // Verify assignment exists
-    const assignmentResult = await client.query('SELECT id, max_group_size FROM assignments WHERE id = $1', [assignmentId]);
+    const assignmentResult = await client.query(
+      "SELECT id, max_group_size FROM assignments WHERE id = $1",
+      [assignmentId],
+    );
     if (assignmentResult.rows.length === 0) {
-      throw new NotFoundError('Assignment not found');
+      throw new NotFoundError("Assignment not found");
     }
 
     // Check if student is already in a group for this assignment
@@ -22,35 +30,35 @@ async function createGroup({ name, assignmentId, userId }) {
       `SELECT gm.id FROM group_members gm
        JOIN groups g ON g.id = gm.group_id
        WHERE gm.user_id = $1 AND g.assignment_id = $2`,
-      [userId, assignmentId]
+      [userId, assignmentId],
     );
     if (existingMembership.rows.length > 0) {
-      throw new ConflictError('You are already in a group for this assignment');
+      throw new ConflictError("You are already in a group for this assignment");
     }
 
     // Create the group
     const groupResult = await client.query(
-      'INSERT INTO groups (name, assignment_id, created_by) VALUES ($1, $2, $3) RETURNING *',
-      [name, assignmentId, userId]
+      "INSERT INTO groups (name, assignment_id, created_by) VALUES ($1, $2, $3) RETURNING *",
+      [name, assignmentId, userId],
     );
     const group = groupResult.rows[0];
 
     // Add creator as leader
     await client.query(
       `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'leader')`,
-      [group.id, userId]
+      [group.id, userId],
     );
 
     // Initialize a submission record for this group
     await client.query(
       `INSERT INTO submissions (assignment_id, group_id, status) VALUES ($1, $2, 'pending')`,
-      [assignmentId, group.id]
+      [assignmentId, group.id],
     );
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     return group;
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw err;
   } finally {
     client.release();
@@ -74,7 +82,7 @@ async function getGroupsByAssignment(assignmentId) {
      LEFT JOIN submissions s ON s.group_id = g.id AND s.assignment_id = g.assignment_id
      WHERE g.assignment_id = $1
      ORDER BY g.created_at ASC`,
-    [assignmentId]
+    [assignmentId],
   );
   return result.rows;
 }
@@ -95,7 +103,7 @@ async function getMyGroups(userId) {
      LEFT JOIN submissions s ON s.group_id = g.id AND s.assignment_id = g.assignment_id
      WHERE gm.user_id = $1
      ORDER BY a.due_date ASC`,
-    [userId]
+    [userId],
   );
   return result.rows;
 }
@@ -109,9 +117,9 @@ async function getGroupDetails(groupId) {
      FROM groups g
      JOIN assignments a ON a.id = g.assignment_id
      WHERE g.id = $1`,
-    [groupId]
+    [groupId],
   );
-  if (groupResult.rows.length === 0) throw new NotFoundError('Group not found');
+  if (groupResult.rows.length === 0) throw new NotFoundError("Group not found");
 
   const group = groupResult.rows[0];
 
@@ -122,7 +130,7 @@ async function getGroupDetails(groupId) {
      JOIN users u ON u.id = gm.user_id
      WHERE gm.group_id = $1
      ORDER BY gm.role DESC, gm.joined_at ASC`,
-    [groupId]
+    [groupId],
   );
 
   group.members = membersResult.rows;
@@ -137,45 +145,49 @@ async function addMember({ groupId, email, requestUserId }) {
   const client = await getClient();
 
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     // Verify the group exists and get assignment info
     const groupResult = await client.query(
       `SELECT g.*, a.max_group_size FROM groups g
        JOIN assignments a ON a.id = g.assignment_id
-       WHERE g.id = $1`,
-      [groupId]
+       WHERE g.id = $1
+       FOR UPDATE OF g`,
+      [groupId],
     );
-    if (groupResult.rows.length === 0) throw new NotFoundError('Group not found');
+    if (groupResult.rows.length === 0)
+      throw new NotFoundError("Group not found");
     const group = groupResult.rows[0];
 
     // Verify requester is the leader
     const leaderCheck = await client.query(
       `SELECT id FROM group_members WHERE group_id = $1 AND user_id = $2 AND role = 'leader'`,
-      [groupId, requestUserId]
+      [groupId, requestUserId],
     );
     if (leaderCheck.rows.length === 0) {
-      throw new ForbiddenError('Only the group leader can add members');
+      throw new ForbiddenError("Only the group leader can add members");
     }
 
     // Check current member count with row lock
     const countResult = await client.query(
-      'SELECT COUNT(*) AS cnt FROM group_members WHERE group_id = $1 FOR UPDATE',
-      [groupId]
+      "SELECT COUNT(*) AS cnt FROM group_members WHERE group_id = $1",
+      [groupId],
     );
     const currentCount = parseInt(countResult.rows[0].cnt, 10);
     if (currentCount >= group.max_group_size) {
-      throw new BadRequestError(`Group is full (max ${group.max_group_size} members)`);
+      throw new BadRequestError(
+        `Group is full (max ${group.max_group_size} members)`,
+      );
     }
 
     // Find the student by email (case-insensitive)
     const normalizedEmail = email.trim().toLowerCase();
     const userResult = await client.query(
-      `SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND role = 'student'`,
-      [normalizedEmail]
+      `SELECT id, full_name, email FROM users WHERE LOWER(TRIM(email)) = $1 AND role = 'student'`,
+      [normalizedEmail],
     );
     if (userResult.rows.length === 0) {
-      throw new NotFoundError('No student found with this email');
+      throw new NotFoundError("No student found with this email");
     }
     const student = userResult.rows[0];
 
@@ -184,22 +196,24 @@ async function addMember({ groupId, email, requestUserId }) {
       `SELECT gm.id FROM group_members gm
        JOIN groups g ON g.id = gm.group_id
        WHERE gm.user_id = $1 AND g.assignment_id = $2`,
-      [student.id, group.assignment_id]
+      [student.id, group.assignment_id],
     );
     if (existingMembership.rows.length > 0) {
-      throw new ConflictError('This student is already in a group for this assignment');
+      throw new ConflictError(
+        "This student is already in a group for this assignment",
+      );
     }
 
     // Add the member
     await client.query(
       `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member')`,
-      [groupId, student.id]
+      [groupId, student.id],
     );
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     return { message: `${student.full_name} added to the group`, student };
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw err;
   } finally {
     client.release();
@@ -214,26 +228,33 @@ async function removeMember({ groupId, targetUserId, requestUserId }) {
   // Verify requester is the leader
   const leaderCheck = await query(
     `SELECT id FROM group_members WHERE group_id = $1 AND user_id = $2 AND role = 'leader'`,
-    [groupId, requestUserId]
+    [groupId, requestUserId],
   );
   if (leaderCheck.rows.length === 0) {
-    throw new ForbiddenError('Only the group leader can remove members');
+    throw new ForbiddenError("Only the group leader can remove members");
   }
 
   if (parseInt(targetUserId) === requestUserId) {
-    throw new BadRequestError('Cannot remove yourself as the leader');
+    throw new BadRequestError("Cannot remove yourself as the leader");
   }
 
   const result = await query(
-    'DELETE FROM group_members WHERE group_id = $1 AND user_id = $2 RETURNING id',
-    [groupId, targetUserId]
+    "DELETE FROM group_members WHERE group_id = $1 AND user_id = $2 RETURNING id",
+    [groupId, targetUserId],
   );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Member not found in this group');
+    throw new NotFoundError("Member not found in this group");
   }
 
-  return { message: 'Member removed' };
+  return { message: "Member removed" };
 }
 
-module.exports = { createGroup, getGroupsByAssignment, getMyGroups, getGroupDetails, addMember, removeMember };
+module.exports = {
+  createGroup,
+  getGroupsByAssignment,
+  getMyGroups,
+  getGroupDetails,
+  addMember,
+  removeMember,
+};

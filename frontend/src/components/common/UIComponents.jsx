@@ -1,21 +1,21 @@
-import { useRef, useLayoutEffect } from 'react';
-import Inbox from 'lucide-react/dist/esm/icons/inbox';
-import { gsap, prefersReducedMotion, DURATION, EASE } from '@/lib/gsapConfig';
+import { useRef, useLayoutEffect } from "react";
+import Inbox from "lucide-react/dist/esm/icons/inbox";
+import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 
 const statusConfig = {
-  pending:               { label: 'Pending',      className: 'badge-neutral' },
-  link_visited:          { label: 'Visited',       className: 'badge-neutral' },
-  awaiting_confirmation: { label: 'Awaiting',      className: 'badge-warning' },
-  submitted:             { label: 'Submitted',     className: 'badge-success' },
+  pending: { label: "Pending", className: "badge-neutral" },
+  link_visited: { label: "Visited", className: "badge-neutral" },
+  awaiting_confirmation: { label: "Awaiting", className: "badge-warning" },
+  submitted: { label: "Submitted", className: "badge-success" },
 };
 
 const ragColorMap = {
-  green: 'bg-semantic-success',
-  amber: 'bg-semantic-warning',
-  red:   'bg-semantic-danger',
+  green: "bg-semantic-success",
+  amber: "bg-semantic-warning",
+  red: "bg-semantic-danger",
 };
 
-const spinnerSizes = { sm: 'w-4 h-4', md: 'w-5 h-5', lg: 'w-8 h-8' };
+const spinnerSizes = { sm: "w-4 h-4", md: "w-5 h-5", lg: "w-8 h-8" };
 
 /**
  * Renders a localized status badge.
@@ -61,7 +61,7 @@ export function ProgressBar({ value, max = 100 }) {
         duration: DURATION.SLOW,
         delay: 0.3,
         ease: EASE.out,
-        transformOrigin: 'left center',
+        transformOrigin: "left center",
       });
     });
 
@@ -77,7 +77,12 @@ export function ProgressBar({ value, max = 100 }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-label text-text-tertiary font-mono w-8 text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+      <span
+        className="text-label text-text-tertiary font-mono w-8 text-right"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {pct}%
+      </span>
     </div>
   );
 }
@@ -100,7 +105,7 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
       gsap.to(iconRef.current, {
         y: -6,
         duration: 3,
-        ease: 'sine.inOut',
+        ease: "sine.inOut",
         repeat: -1,
         yoyo: true,
       });
@@ -114,13 +119,22 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
       <div
         ref={iconRef}
         className="w-14 h-14 rounded-2xl bg-surface-overlay flex items-center justify-center mb-5"
-        style={{ willChange: 'transform' }}
+        style={{ willChange: "transform" }}
       >
-        <Icon size={24} className="text-text-tertiary" strokeWidth={1.5} aria-hidden="true" />
+        <Icon
+          size={24}
+          className="text-text-tertiary"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
       </div>
-      <h3 className="text-xl sm:text-body font-semibold text-text-primary mb-1">{title}</h3>
+      <h3 className="text-xl sm:text-body font-semibold text-text-primary mb-1">
+        {title}
+      </h3>
       {description && (
-        <p className="text-sm sm:text-meta text-text-secondary max-w-sm mb-6">{description}</p>
+        <p className="text-sm sm:text-meta text-text-secondary max-w-sm mb-6">
+          {description}
+        </p>
       )}
       {action}
     </div>
@@ -140,13 +154,13 @@ export function StatCard({ label, value, sublabel }) {
   useLayoutEffect(() => {
     if (prefersReducedMotion || !valueRef.current) return;
 
-    const numVal = typeof value === 'string' ? parseFloat(value) : value;
+    const numVal = typeof value === "string" ? parseFloat(value) : value;
     if (isNaN(numVal)) {
       valueRef.current.textContent = value;
       return;
     }
 
-    const suffix = typeof value === 'string' ? value.replace(/[\d.]/g, '') : '';
+    const suffix = typeof value === "string" ? value.replace(/[\d.]/g, "") : "";
     const obj = { val: 0 };
 
     const ctx = gsap.context(() => {
@@ -166,15 +180,21 @@ export function StatCard({ label, value, sublabel }) {
 
   return (
     <div className="card px-4 sm:px-6 py-4 sm:py-6 group hover:shadow-card-hover transition-shadow">
-      <p className="text-xs sm:text-label text-text-tertiary uppercase tracking-widest">{label}</p>
+      <p className="text-xs sm:text-label text-text-tertiary uppercase tracking-widest">
+        {label}
+      </p>
       <p
         ref={valueRef}
         className="text-2xl sm:text-[36px] font-bold text-text-primary mt-2 leading-none"
-        style={{ fontVariantNumeric: 'tabular-nums' }}
+        style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {prefersReducedMotion ? value : 0}
       </p>
-      {sublabel && <p className="text-xs sm:text-label text-text-tertiary mt-2">{sublabel}</p>}
+      {sublabel && (
+        <p className="text-xs sm:text-label text-text-tertiary mt-2">
+          {sublabel}
+        </p>
+      )}
     </div>
   );
 }
@@ -184,9 +204,13 @@ export function StatCard({ label, value, sublabel }) {
  * @param {Object} props
  * @param {'sm'|'md'|'lg'} [props.size='md'] - Spinner size
  */
-export function Spinner({ size = 'md' }) {
+export function Spinner({ size = "md" }) {
   return (
-    <div className={`${spinnerSizes[size]} border-2 border-accent/20 border-t-accent rounded-full animate-spin`} role="status" aria-label="Loading…">
+    <div
+      className={`${spinnerSizes[size]} border-2 border-accent/20 border-t-accent rounded-full animate-spin`}
+      role="status"
+      aria-label="Loading…"
+    >
       <span className="sr-only">Loading…</span>
     </div>
   );

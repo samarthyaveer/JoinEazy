@@ -1,23 +1,23 @@
-import { useCallback, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard';
-import FileText from 'lucide-react/dist/esm/icons/file-text';
-import Users from 'lucide-react/dist/esm/icons/users';
-import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
-import LogOut from 'lucide-react/dist/esm/icons/log-out';
-import X from 'lucide-react/dist/esm/icons/x';
+import { useCallback, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import LayoutDashboard from "lucide-react/dist/esm/icons/layout-dashboard";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Users from "lucide-react/dist/esm/icons/users";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
+import LogOut from "lucide-react/dist/esm/icons/log-out";
+import X from "lucide-react/dist/esm/icons/x";
 
 const STUDENT_LINKS = [
-  { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { to: '/assignments', label: 'Assignments', icon: FileText },
-  { to: '/my-groups', label: 'Groups', icon: Users },
+  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { to: "/assignments", label: "Assignments", icon: FileText },
+  { to: "/my-groups", label: "Groups", icon: Users },
 ];
 
 const ADMIN_LINKS = [
-  { to: '/admin', label: 'Home', icon: LayoutDashboard },
-  { to: '/admin/assignments', label: 'Assignments', icon: FileText },
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: "/admin", label: "Home", icon: LayoutDashboard },
+  { to: "/admin/assignments", label: "Assignments", icon: FileText },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 /**
@@ -29,19 +29,19 @@ const ADMIN_LINKS = [
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const links = user?.role === 'admin' ? ADMIN_LINKS : STUDENT_LINKS;
+  const links = user?.role === "admin" ? ADMIN_LINKS : STUDENT_LINKS;
 
   // Handle escape key to close mobile sidebar
   useEffect(() => {
     if (!isOpen) return;
-    const handleEsc = (e) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
+    const handleEsc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
   const handleLogout = useCallback(async () => {
     await logout();
-    navigate('/login');
+    navigate("/login");
   }, [logout, navigate]);
 
   const sidebarContent = (
@@ -50,7 +50,9 @@ export default function Sidebar({ isOpen, onClose }) {
       <div className="flex items-center justify-between h-14 md:h-16 px-6 shrink-0 border-b border-border lg:border-transparent">
         <div className="flex items-center gap-3">
           <img src="/joineazy.png" alt="JoinEazy Logo" width={28} height={28} />
-          <span className="text-body font-bold text-text-primary">JoinEazy</span>
+          <span className="text-body font-bold text-text-primary">
+            JoinEazy
+          </span>
         </div>
         <button
           onClick={onClose}
@@ -65,18 +67,20 @@ export default function Sidebar({ isOpen, onClose }) {
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
         {links.map((link) => {
           const Icon = link.icon;
-          const isExact = link.to === '/dashboard' || link.to === '/admin';
+          const isExact = link.to === "/dashboard" || link.to === "/admin";
           return (
             <NavLink
               key={link.to}
               to={link.to}
               end={isExact}
-              onClick={() => { if(window.innerWidth < 1024) onClose(); }}
+              onClick={() => {
+                if (window.innerWidth < 1024) onClose();
+              }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-meta font-medium ${
                   isActive
-                    ? 'bg-accent/10 border-l-4 border-accent text-accent'
-                    : 'text-text-secondary hover:bg-surface-overlay hover:text-text-primary border-l-4 border-transparent'
+                    ? "bg-accent/10 border-l-4 border-accent text-accent"
+                    : "text-text-secondary hover:bg-surface-overlay hover:text-text-primary border-l-4 border-transparent"
                 }`
               }
             >
@@ -91,11 +95,15 @@ export default function Sidebar({ isOpen, onClose }) {
       <div className="p-4 border-t border-border shrink-0">
         <div className="flex items-center gap-3 px-2 py-3 mb-2 rounded-xl">
           <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-body font-bold text-accent shrink-0">
-            {user?.full_name?.charAt(0)?.toUpperCase() || '?'}
+            {user?.full_name?.charAt(0)?.toUpperCase() || "?"}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-meta font-medium text-text-primary truncate">{user?.full_name}</p>
-            <p className="text-label text-text-tertiary mt-0.5">{user?.role === 'admin' ? 'Professor' : 'Student'}</p>
+            <p className="text-meta font-medium text-text-primary truncate">
+              {user?.full_name}
+            </p>
+            <p className="text-label text-text-tertiary mt-0.5">
+              {user?.role === "admin" ? "Professor" : "Student"}
+            </p>
           </div>
         </div>
         <button
@@ -123,7 +131,7 @@ export default function Sidebar({ isOpen, onClose }) {
       {/* Sidebar Container */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-50 w-[280px] bg-surface transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-[240px] shrink-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {sidebarContent}

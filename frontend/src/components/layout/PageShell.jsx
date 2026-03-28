@@ -1,12 +1,12 @@
-import { useState, useRef, useLayoutEffect } from 'react';
-import Sidebar from './Sidebar';
-import { gsap, prefersReducedMotion, DURATION, EASE } from '@/lib/gsapConfig';
-import Menu from 'lucide-react/dist/esm/icons/menu';
+import { useState, useRef, useLayoutEffect } from "react";
+import Sidebar from "./Sidebar";
+import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
+import Menu from "lucide-react/dist/esm/icons/menu";
 
 /**
  * Standard page shell that wraps the application layout.
  * Includes a responsive sidebar, mobile top navigation, and main content area.
- * 
+ *
  * @param {Object} props
  * @param {React.ReactNode} props.children - Main page content
  * @param {string} props.title - Primary page heading
@@ -24,18 +24,18 @@ export default function PageShell({ title, subtitle, action, children }) {
 
     const ctx = gsap.context(() => {
       // Title clip-path reveal
-      const heading = headerRef.current?.querySelector('h1');
+      const heading = headerRef.current?.querySelector("h1");
       if (heading) {
         gsap.from(heading, {
-          clipPath: 'inset(0 0 100% 0)',
+          clipPath: "inset(0 0 100% 0)",
           opacity: 0,
           duration: DURATION.FAST,
-          ease: 'power3.out',
+          ease: "power3.out",
         });
       }
 
       // Subtitle fade
-      const sub = headerRef.current?.querySelector('p');
+      const sub = headerRef.current?.querySelector("p");
       if (sub) {
         gsap.from(sub, {
           opacity: 0,
@@ -47,7 +47,7 @@ export default function PageShell({ title, subtitle, action, children }) {
       }
 
       // Action button
-      const act = headerRef.current?.querySelector('[data-action]');
+      const act = headerRef.current?.querySelector("[data-action]");
       if (act) {
         gsap.from(act, {
           opacity: 0,
@@ -75,7 +75,7 @@ export default function PageShell({ title, subtitle, action, children }) {
           x: 40,
           y: -30,
           duration: 12,
-          ease: 'sine.inOut',
+          ease: "sine.inOut",
           repeat: -1,
           yoyo: true,
         });
@@ -95,8 +95,15 @@ export default function PageShell({ title, subtitle, action, children }) {
         {/* Mobile Top Navbar */}
         <header className="lg:hidden flex items-center justify-between h-14 px-4 sm:px-6 bg-surface/80 backdrop-blur-md border-b border-border sticky top-0 z-40">
           <div className="flex items-center gap-3">
-            <img src="/joineazy.png" alt="JoinEazy Logo" width={24} height={24} />
-            <span className="text-body font-bold text-text-primary">JoinEazy</span>
+            <img
+              src="/joineazy.png"
+              alt="JoinEazy Logo"
+              width={24}
+              height={24}
+            />
+            <span className="text-body font-bold text-text-primary">
+              JoinEazy
+            </span>
           </div>
           <button
             onClick={() => setSidebarOpen(true)}
@@ -113,12 +120,13 @@ export default function PageShell({ title, subtitle, action, children }) {
           ref={orbRef}
           className="gradient-orb pointer-events-none absolute"
           style={{
-            width: '600px',
-            height: '600px',
-            background: 'radial-gradient(circle, rgba(0,85,255,0.04) 0%, transparent 70%)',
-            top: '-10%',
-            right: '-5%',
-            zIndex: 0
+            width: "600px",
+            height: "600px",
+            background:
+              "radial-gradient(circle, rgba(0,85,255,0.04) 0%, transparent 70%)",
+            top: "-10%",
+            right: "-5%",
+            zIndex: 0,
           }}
         />
 
@@ -126,9 +134,15 @@ export default function PageShell({ title, subtitle, action, children }) {
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 lg:pt-10 z-10">
           <div className="max-w-7xl mx-auto w-full">
             {/* Page Header */}
-            <div ref={headerRef} className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 sm:mb-10">
+            <div
+              ref={headerRef}
+              className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 sm:mb-10"
+            >
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-page font-bold text-text-primary" style={{ textWrap: 'balance' }}>
+                <h1
+                  className="text-2xl sm:text-3xl lg:text-page font-bold text-text-primary"
+                  style={{ textWrap: "balance" }}
+                >
                   {title}
                 </h1>
                 {subtitle && (
@@ -145,9 +159,7 @@ export default function PageShell({ title, subtitle, action, children }) {
             </div>
 
             {/* Page Content */}
-            <div ref={contentRef}>
-              {children}
-            </div>
+            <div ref={contentRef}>{children}</div>
           </div>
         </main>
       </div>
