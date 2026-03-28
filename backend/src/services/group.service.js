@@ -168,10 +168,11 @@ async function addMember({ groupId, email, requestUserId }) {
       throw new BadRequestError(`Group is full (max ${group.max_group_size} members)`);
     }
 
-    // Find the student by email
+    // Find the student by email (case-insensitive)
+    const normalizedEmail = email.trim().toLowerCase();
     const userResult = await client.query(
-      `SELECT id, full_name, email FROM users WHERE email = $1 AND role = 'student'`,
-      [email]
+      `SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND role = 'student'`,
+      [normalizedEmail]
     );
     if (userResult.rows.length === 0) {
       throw new NotFoundError('No student found with this email');

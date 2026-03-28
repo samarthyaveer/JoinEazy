@@ -9,8 +9,10 @@ const SALT_ROUNDS = 12;
  * Register a new user.
  */
 async function register({ fullName, email, password, role }) {
+  const normalizedEmail = email.trim().toLowerCase();
+
   // Check if email already exists
-  const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
+  const existing = await query('SELECT id FROM users WHERE LOWER(email) = $1', [normalizedEmail]);
   if (existing.rows.length > 0) {
     throw new ConflictError('An account with this email already exists');
   }
@@ -23,7 +25,7 @@ async function register({ fullName, email, password, role }) {
     `INSERT INTO users (full_name, email, password_hash, role)
      VALUES ($1, $2, $3, $4)
      RETURNING id, full_name, email, role, created_at`,
-    [fullName, email, passwordHash, role]
+    [fullName, normalizedEmail, passwordHash, role]
   );
 
   const user = result.rows[0];
@@ -38,9 +40,10 @@ async function register({ fullName, email, password, role }) {
  * Authenticate user credentials.
  */
 async function login({ email, password }) {
+  const normalizedEmail = email.trim().toLowerCase();
   const result = await query(
-    'SELECT id, full_name, email, password_hash, role FROM users WHERE email = $1',
-    [email]
+    'SELECT id, full_name, email, password_hash, role FROM users WHERE LOWER(email) = $1',
+    [normalizedEmail]
   );
 
   if (result.rows.length === 0) {
