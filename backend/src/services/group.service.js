@@ -12,6 +12,11 @@ const {
  */
 async function createGroup({ name, assignmentId, userId }) {
   const client = await getClient();
+  const trimmedName = name.trim();
+
+  if (!trimmedName) {
+    throw new BadRequestError("Group name cannot be empty");
+  }
 
   try {
     await client.query("BEGIN");
@@ -39,7 +44,7 @@ async function createGroup({ name, assignmentId, userId }) {
     // Create the group
     const groupResult = await client.query(
       "INSERT INTO groups (name, assignment_id, created_by) VALUES ($1, $2, $3) RETURNING *",
-      [name, assignmentId, userId],
+      [trimmedName, assignmentId, userId],
     );
     const group = groupResult.rows[0];
 
@@ -105,7 +110,11 @@ async function getMyGroups(userId) {
      ORDER BY a.due_date ASC`,
     [userId],
   );
-  return result.rows;
+  return result.rows.map((row) => ({
+    ...row,
+    member_count: Number(row.member_count || 0),
+    max_group_size: Number(row.max_group_size || 0),
+  }));
 }
 
 /**

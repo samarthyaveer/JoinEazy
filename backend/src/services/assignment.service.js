@@ -1,5 +1,5 @@
 const { query, getClient } = require('../config/db');
-const { NotFoundError, ForbiddenError } = require('../utils/errors');
+const { NotFoundError } = require('../utils/errors');
 
 /**
  * Create a new assignment (admin only).
@@ -44,18 +44,75 @@ async function getAssignments(user) {
        JOIN users u ON u.id = a.created_by
        ORDER BY a.due_date ASC`
     );
-    return result.rows;
+    return result.rows.map((row) => ({
+      ...row,
+      group_count: Number(row.group_count || 0),
+      submitted_count: Number(row.submitted_count || 0),
+      total_submissions: Number(row.total_submissions || 0),
+    }));
   }
 
-  // Student: show all assignments
+  // Student: return assignment + current user's group/submission summary in one pass.
   const result = await query(
-    `SELECT DISTINCT a.*,
-            u.full_name AS creator_name
+    `SELECT a.*,
+            u.full_name AS creator_name,
+            my_state.group_id,
+            my_state.group_name,
+            my_state.my_role,
+            my_state.member_count,
+            my_state.submitted_members,
+            my_state.submission_id,
+            my_state.submission_status,
+            my_state.my_submission_status,
+            my_state.confirmed_at
      FROM assignments a
      JOIN users u ON u.id = a.created_by
-     ORDER BY a.due_date ASC`
+     LEFT JOIN LATERAL (
+       SELECT g.id AS group_id,
+              g.name AS group_name,
+              gm.role AS my_role,
+              (SELECT COUNT(*)::int FROM group_members gm_count WHERE gm_count.group_id = g.id) AS member_count,
+              (
+                SELECT COUNT(*)::int
+                FROM group_members gm_count
+                WHERE gm_count.group_id = g.id
+                  AND gm_count.submission_status = 'submitted'
+              ) AS submitted_members,
+              s.id AS submission_id,
+              s.status AS submission_status,
+              gm.submission_status AS my_submission_status,
+              s.confirmed_at
+       FROM groups g
+       JOIN group_members gm ON gm.group_id = g.id
+       LEFT JOIN submissions s ON s.group_id = g.id AND s.assignment_id = a.id
+       WHERE g.assignment_id = a.id
+         AND gm.user_id = $1
+       LIMIT 1
+     ) AS my_state ON TRUE
+     ORDER BY a.due_date ASC`,
+    [user.id]
   );
-  return result.rows;
+
+  return result.rows.map((row) => ({
+    ...row,
+    my_group: row.group_id
+      ? {
+          id: row.group_id,
+          name: row.group_name,
+          my_role: row.my_role,
+          member_count: Number(row.member_count || 0),
+          submitted_members: Number(row.submitted_members || 0),
+        }
+      : null,
+    my_submission: row.submission_id
+      ? {
+          id: row.submission_id,
+          status: row.submission_status,
+          my_submission_status: row.my_submission_status,
+          confirmed_at: row.confirmed_at,
+        }
+      : null,
+  }));
 }
 
 /**
@@ -101,7 +158,16 @@ async function getAssignmentById(assignmentId, user) {
 
     // Get user's group for this assignment
     const myGroupResult = await query(
-      `SELECT g.*, gm.role AS my_role FROM groups g
+      `SELECT g.*,
+              gm.role AS my_role,
+              (SELECT COUNT(*)::int FROM group_members gm_count WHERE gm_count.group_id = g.id) AS member_count,
+              (
+                SELECT COUNT(*)::int
+                FROM group_members gm_count
+                WHERE gm_count.group_id = g.id
+                  AND gm_count.submission_status = 'submitted'
+              ) AS submitted_members
+       FROM groups g
        JOIN group_members gm ON gm.group_id = g.id
        WHERE g.assignment_id = $1 AND gm.user_id = $2
        LIMIT 1`,

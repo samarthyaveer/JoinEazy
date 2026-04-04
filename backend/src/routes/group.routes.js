@@ -1,9 +1,9 @@
-const router = require('express').Router();
-const Joi = require('joi');
-const { validate } = require('../middleware/validate');
-const { authenticate } = require('../middleware/authenticate');
-const { authorize } = require('../middleware/authorize');
-const groupController = require('../controllers/group.controller');
+const router = require("express").Router();
+const Joi = require("joi");
+const { validate } = require("../middleware/validate");
+const { authenticate } = require("../middleware/authenticate");
+const { authorize } = require("../middleware/authorize");
+const groupController = require("../controllers/group.controller");
 
 // Validation schemas
 const createGroupSchema = Joi.object({
@@ -15,38 +15,47 @@ const addMemberSchema = Joi.object({
 });
 
 // Student's own groups
-router.get('/my', authenticate, authorize('student'), groupController.getMyGroups);
+router.get(
+  "/my",
+  authenticate,
+  authorize("student"),
+  groupController.getMyGroups,
+);
 
 // Groups for a specific assignment
-router.get('/assignment/:assignmentId', authenticate, groupController.getByAssignment);
+router.get(
+  "/assignment/:assignmentId",
+  authenticate,
+  groupController.getByAssignment,
+);
 
 // Group details
-router.get('/:groupId', authenticate, groupController.getDetails);
+router.get("/:groupId", authenticate, groupController.getDetails);
 
 // Create a group for an assignment
 router.post(
-  '/assignment/:assignmentId',
+  "/assignment/:assignmentId",
   authenticate,
-  authorize('student'),
+  authorize("student"),
   validate(createGroupSchema),
-  groupController.create
+  groupController.create,
 );
 
 // Add member to group
 router.post(
-  '/:groupId/members',
+  "/:groupId/members",
   authenticate,
-  authorize('student'),
+  authorize("student"),
   validate(addMemberSchema),
-  groupController.addMember
+  groupController.addMember,
 );
 
 // Remove member from group
 router.delete(
-  '/:groupId/members/:userId',
+  "/:groupId/members/:userId",
   authenticate,
-  authorize('student'),
-  groupController.removeMember
+  authorize("student"),
+  groupController.removeMember,
 );
 
 module.exports = router;

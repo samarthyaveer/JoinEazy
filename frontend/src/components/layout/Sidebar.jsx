@@ -4,37 +4,39 @@ import { useAuth } from "@/context/AuthContext";
 import LayoutDashboard from "lucide-react/dist/esm/icons/layout-dashboard";
 import FileText from "lucide-react/dist/esm/icons/file-text";
 import Users from "lucide-react/dist/esm/icons/users";
-import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import LogOut from "lucide-react/dist/esm/icons/log-out";
 import X from "lucide-react/dist/esm/icons/x";
 
 const STUDENT_LINKS = [
-  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { to: "/assignments", label: "Assignments", icon: FileText },
-  { to: "/my-groups", label: "Groups", icon: Users },
+  { to: "/dashboard", label: "Overview", shortLabel: "Home", icon: LayoutDashboard, exact: true },
+  { to: "/assignments", label: "Assignments", shortLabel: "Work", icon: FileText, exact: true },
+  { to: "/my-groups", label: "Groups", shortLabel: "Groups", icon: Users, exact: true },
 ];
 
 const ADMIN_LINKS = [
-  { to: "/admin", label: "Home", icon: LayoutDashboard },
-  { to: "/admin/assignments", label: "Assignments", icon: FileText },
-  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/admin/assignments", label: "Assignments", shortLabel: "List", icon: FileText, exact: true },
+  { to: "/admin/assignments/new", label: "New assignment", shortLabel: "New", icon: Plus, exact: true },
+  { to: "/admin", label: "Overview", shortLabel: "Home", icon: LayoutDashboard, exact: true },
 ];
 
-/**
- * Sidebar navigation component (desktop fixed, mobile drawer).
- * @param {Object} props
- * @param {boolean} props.isOpen - For mobile, controls the drawer open state
- * @param {Function} props.onClose - For mobile, closes the drawer
- */
+function getUserInitials(fullName) {
+  return (fullName || "?")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const links = user?.role === "admin" ? ADMIN_LINKS : STUDENT_LINKS;
 
-  // Handle escape key to close mobile sidebar
   useEffect(() => {
     if (!isOpen) return;
-    const handleEsc = (e) => e.key === "Escape" && onClose();
+    const handleEsc = (event) => event.key === "Escape" && onClose();
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
@@ -44,98 +46,159 @@ export default function Sidebar({ isOpen, onClose }) {
     navigate("/login");
   }, [logout, navigate]);
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full bg-surface border-r border-border">
-      {/* Brand Header */}
-      <div className="flex items-center justify-between h-14 md:h-16 px-6 shrink-0 border-b border-border lg:border-transparent">
-        <div className="flex items-center gap-3">
-          <img src="/joineazy.png" alt="JoinEazy Logo" width={28} height={28} />
-          <span className="text-body font-bold text-text-primary">
-            JoinEazy
-          </span>
-        </div>
-        <button
-          onClick={onClose}
-          className="lg:hidden p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-overlay rounded-xl transition-colors"
-          aria-label="Close sidebar"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-        {links.map((link) => {
-          const Icon = link.icon;
-          const isExact = link.to === "/dashboard" || link.to === "/admin";
-          return (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={isExact}
-              onClick={() => {
-                if (window.innerWidth < 1024) onClose();
-              }}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-meta font-medium ${
-                  isActive
-                    ? "bg-accent/10 border-l-4 border-accent text-accent"
-                    : "text-text-secondary hover:bg-surface-overlay hover:text-text-primary border-l-4 border-transparent"
-                }`
-              }
-            >
-              <Icon size={20} strokeWidth={1.5} />
-              {link.label}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      {/* User Profile / Logout footer */}
-      <div className="p-4 border-t border-border shrink-0">
-        <div className="flex items-center gap-3 px-2 py-3 mb-2 rounded-xl">
-          <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center text-body font-bold text-accent shrink-0">
-            {user?.full_name?.charAt(0)?.toUpperCase() || "?"}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-meta font-medium text-text-primary truncate">
-              {user?.full_name}
-            </p>
-            <p className="text-label text-text-tertiary mt-0.5">
-              {user?.role === "admin" ? "Professor" : "Student"}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-overlay hover:text-semantic-danger transition-colors text-meta font-medium"
-        >
-          <LogOut size={20} strokeWidth={1.5} />
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
+  const handleNavClick = useCallback(() => {
+    if (window.innerWidth < 1024) onClose();
+  }, [onClose]);
 
   return (
     <>
-      {/* Mobile Drawer Overlay */}
-      {isOpen && (
+      {isOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
-      )}
+      ) : null}
 
-      {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-[280px] bg-surface transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-[240px] shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] bg-white/96 backdrop-blur-xl border-r border-black/8 shadow-2xl transform transition-transform duration-300 ease-out lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {sidebarContent}
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between px-5 py-5 border-b border-black/6">
+            <div className="flex items-center gap-3">
+              <img src="/joineazy.png" alt="JoinEazy Logo" width={30} height={30} />
+              <div>
+                <p className="text-body font-semibold text-text-primary">JoinEazy</p>
+                <p className="text-label text-text-tertiary">
+                  {user?.role === "admin" ? "Instructor workspace" : "Student workspace"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 inline-flex items-center justify-center rounded-2xl text-text-tertiary hover:text-text-primary hover:bg-surface-overlay transition-colors"
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-2">
+            {links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.exact}
+                  onClick={handleNavClick}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-2xl px-4 py-3 text-meta font-medium transition-all ${
+                      isActive
+                        ? "bg-accent text-white shadow-lg shadow-accent/15"
+                        : "text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
+                    }`
+                  }
+                >
+                  <Icon size={18} strokeWidth={1.75} />
+                  <span>{link.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          <div className="border-t border-black/6 px-4 py-4">
+            <div className="rounded-[24px] border border-black/6 bg-surface-overlay/70 p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-accent text-white flex items-center justify-center text-meta font-semibold">
+                  {getUserInitials(user?.full_name)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-meta font-medium text-text-primary truncate">
+                    {user?.full_name}
+                  </p>
+                  <p className="text-label text-text-tertiary">
+                    {user?.role === "admin" ? "Professor" : "Student"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="btn-secondary w-full mt-4"
+              >
+                <LogOut size={16} aria-hidden="true" />
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       </aside>
+
+      <div className="hidden lg:flex fixed left-1/2 bottom-5 -translate-x-1/2 z-40">
+        <div className="flex items-center gap-2 rounded-[30px] border border-black/8 bg-white/92 px-3 py-3 shadow-[0_22px_50px_rgba(15,15,15,0.14)] backdrop-blur-xl">
+          <div className="hidden xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/70 px-4 py-3 border border-black/6">
+            <img src="/joineazy.png" alt="JoinEazy Logo" width={28} height={28} />
+            <div>
+              <p className="text-meta font-semibold text-text-primary leading-none">
+                JoinEazy
+              </p>
+              <p className="text-label text-text-tertiary mt-1">
+                {user?.role === "admin" ? "Professor mode" : "Student mode"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.exact}
+                  className={({ isActive }) =>
+                    `flex min-w-[92px] flex-col items-center justify-center gap-1 rounded-[22px] px-4 py-3 text-label font-medium transition-all ${
+                      isActive
+                        ? "bg-accent text-white shadow-lg shadow-accent/20"
+                        : "text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
+                    }`
+                  }
+                >
+                  <Icon size={18} strokeWidth={1.75} />
+                  <span>{link.shortLabel}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+
+          <div className="w-px h-12 bg-black/8 mx-1" />
+
+          <div className="flex items-center gap-2">
+            <div className="hidden 2xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/70 px-4 py-3 border border-black/6">
+              <div className="w-10 h-10 rounded-2xl bg-accent text-white flex items-center justify-center text-meta font-semibold">
+                {getUserInitials(user?.full_name)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-meta font-medium text-text-primary truncate">
+                  {user?.full_name}
+                </p>
+                <p className="text-label text-text-tertiary">
+                  {user?.role === "admin" ? "Professor" : "Student"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex h-[56px] w-[56px] items-center justify-center rounded-[22px] text-text-secondary hover:bg-surface-overlay hover:text-semantic-danger transition-colors"
+              aria-label="Sign out"
+            >
+              <LogOut size={18} strokeWidth={1.75} />
+            </button>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

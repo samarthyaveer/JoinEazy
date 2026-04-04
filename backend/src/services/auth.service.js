@@ -16,9 +16,10 @@ async function register({ fullName, email, password, role }) {
   const normalizedEmail = email.trim().toLowerCase();
 
   // Check if email already exists
-  const existing = await query("SELECT id FROM users WHERE LOWER(TRIM(email)) = $1", [
-    normalizedEmail,
-  ]);
+  const existing = await query(
+    "SELECT id FROM users WHERE LOWER(TRIM(email)) = $1",
+    [normalizedEmail],
+  );
   if (existing.rows.length > 0) {
     throw new ConflictError("An account with this email already exists");
   }

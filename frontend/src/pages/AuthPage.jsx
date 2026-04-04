@@ -171,7 +171,7 @@ export default function AuthPage() {
         const user = await login(loginForm.email, loginForm.password);
         navigate(user.role === "admin" ? "/admin" : "/dashboard");
       } catch (err) {
-        setError(err.message || "Invalid credentials.");
+        setError(err.message || "Wrong email or password. Try again.");
       } finally {
         setLoading(false);
       }
@@ -185,11 +185,11 @@ export default function AuthPage() {
       e.preventDefault();
       setError("");
       if (regForm.password !== regForm.confirmPassword) {
-        setError("Passwords do not match.");
+        setError("Passwords don't match.");
         return;
       }
       if (regForm.password.length < 6) {
-        setError("Password must be at least 6 characters.");
+        setError("Use 6+ characters.");
         return;
       }
       setLoading(true);
@@ -202,7 +202,7 @@ export default function AuthPage() {
         });
         navigate(user.role === "admin" ? "/admin" : "/dashboard");
       } catch (err) {
-        setError(err.message || "Registration failed.");
+        setError(err.message || "Couldn't create account. Try again.");
       } finally {
         setLoading(false);
       }
@@ -260,10 +260,10 @@ export default function AuthPage() {
           >
             <div ref={loginFormRef} className="w-full max-w-sm mx-auto">
               <h2 className="text-page text-text-primary mb-2 form-field">
-                Sign In
+                Sign in
               </h2>
               <p className="text-body text-text-secondary mb-8 form-field">
-                Welcome back to JoinEazy
+                Welcome back.
               </p>
 
               {!isRegister && error ? (
@@ -282,7 +282,7 @@ export default function AuthPage() {
                     className="block text-meta font-medium text-text-primary mb-1.5"
                     htmlFor="login-email"
                   >
-                    Email
+                    Email address
                   </label>
                   <input
                     id="login-email"
@@ -291,7 +291,7 @@ export default function AuthPage() {
                     autoComplete="email"
                     spellCheck={false}
                     className="input-field"
-                    placeholder="you@example.com"
+                    placeholder="name@example.com"
                     value={loginForm.email}
                     onChange={(e) =>
                       setLoginForm((p) => ({
@@ -307,7 +307,7 @@ export default function AuthPage() {
                     className="block text-meta font-medium text-text-primary mb-1.5"
                     htmlFor="login-password"
                   >
-                    Password
+                    Account password
                   </label>
                   <input
                     id="login-password"
@@ -315,7 +315,7 @@ export default function AuthPage() {
                     type="password"
                     autoComplete="current-password"
                     className="input-field"
-                    placeholder="Enter password"
+                    placeholder="********"
                     value={loginForm.password}
                     onChange={(e) =>
                       setLoginForm((p) => ({ ...p, password: e.target.value }))
@@ -334,20 +334,20 @@ export default function AuthPage() {
                     {loading && !isRegister ? (
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      "Sign In"
+                      "Sign in"
                     )}
                   </button>
                 </div>
               </form>
 
               <p className="lg:hidden text-meta text-text-secondary text-center mt-8 form-field">
-                Don't have an account?{" "}
+                Need an account?{" "}
                 <button
                   onClick={toggleMode}
                   type="button"
                   className="text-accent font-medium hover:text-accent-hover transition-colors"
                 >
-                  Sign Up
+                  Sign up
                 </button>
               </p>
             </div>
@@ -359,10 +359,10 @@ export default function AuthPage() {
           >
             <div ref={registerFormRef} className="w-full max-w-sm mx-auto">
               <h2 className="text-page text-text-primary mb-2 form-field">
-                Create Account
+                Create account
               </h2>
               <p className="text-body text-text-secondary mb-8 form-field">
-                Join as student or professor
+                Choose a role
               </p>
 
               {isRegister && error ? (
@@ -379,7 +379,7 @@ export default function AuthPage() {
                 {/* Role toggle */}
                 <div className="form-field">
                   <label className="block text-meta font-medium text-text-primary mb-1.5">
-                    I am a
+                    I'm a
                   </label>
                   <div
                     className="relative grid grid-cols-2 rounded-xl border border-border-strong overflow-hidden"
@@ -406,7 +406,7 @@ export default function AuthPage() {
                         onClick={() => handleRoleChange(role)}
                         className={`relative z-10 text-meta font-medium transition-colors duration-200 ${regForm.role === role ? "text-white" : "text-text-secondary hover:text-text-primary"}`}
                       >
-                        {role === "student" ? "Student" : "Professor"}
+                        {role === "student" ? "Student" : "Instructor"}
                       </button>
                     ))}
                   </div>
@@ -417,7 +417,7 @@ export default function AuthPage() {
                     className="block text-meta font-medium text-text-primary mb-1.5"
                     htmlFor="reg-name"
                   >
-                    Full Name
+                    Full name
                   </label>
                   <input
                     id="reg-name"
@@ -425,7 +425,7 @@ export default function AuthPage() {
                     type="text"
                     autoComplete="name"
                     className="input-field"
-                    placeholder="John Doe"
+                    placeholder="e.g. John Doe"
                     value={regForm.fullName}
                     onChange={(e) =>
                       setRegForm((p) => ({ ...p, fullName: e.target.value }))
@@ -438,7 +438,7 @@ export default function AuthPage() {
                     className="block text-meta font-medium text-text-primary mb-1.5"
                     htmlFor="reg-email"
                   >
-                    Email
+                    Email address
                   </label>
                   <input
                     id="reg-email"
@@ -447,7 +447,7 @@ export default function AuthPage() {
                     autoComplete="email"
                     spellCheck={false}
                     className="input-field"
-                    placeholder="you@example.com"
+                    placeholder="name@example.com"
                     value={regForm.email}
                     onChange={(e) =>
                       setRegForm((p) => ({
@@ -463,7 +463,7 @@ export default function AuthPage() {
                     className="block text-meta font-medium text-text-primary mb-1.5"
                     htmlFor="reg-password"
                   >
-                    Password
+                    Create password
                   </label>
                   <input
                     id="reg-password"
@@ -471,7 +471,7 @@ export default function AuthPage() {
                     type="password"
                     autoComplete="new-password"
                     className="input-field"
-                    placeholder="Min 6 characters"
+                    placeholder="6+ characters"
                     value={regForm.password}
                     onChange={(e) =>
                       setRegForm((p) => ({ ...p, password: e.target.value }))
@@ -484,7 +484,7 @@ export default function AuthPage() {
                     className="block text-meta font-medium text-text-primary mb-1.5"
                     htmlFor="reg-confirm"
                   >
-                    Confirm Password
+                    Confirm password
                   </label>
                   <input
                     id="reg-confirm"
@@ -492,7 +492,7 @@ export default function AuthPage() {
                     type="password"
                     autoComplete="new-password"
                     className="input-field"
-                    placeholder="Re-enter password"
+                    placeholder="Repeat password"
                     value={regForm.confirmPassword}
                     onChange={(e) =>
                       setRegForm((p) => ({
@@ -514,20 +514,20 @@ export default function AuthPage() {
                     {loading && isRegister ? (
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      "Create Account"
+                      "Create account"
                     )}
                   </button>
                 </div>
               </form>
 
               <p className="lg:hidden text-meta text-text-secondary text-center mt-6 form-field">
-                Already have an account?{" "}
+                Have an account?{" "}
                 <button
                   onClick={toggleMode}
                   type="button"
                   className="text-accent font-medium hover:text-accent-hover transition-colors"
                 >
-                  Sign In
+                  Sign in
                 </button>
               </p>
             </div>
@@ -569,27 +569,23 @@ export default function AuthPage() {
             >
               {isRegister ? (
                 <>
-                  Welcome back.
+                  Sign in.
                   <br />
-                  <span className="text-white/50">
-                    Pick up where you left off.
-                  </span>
+                  <span className="text-white/50">Back to your account.</span>
                 </>
               ) : (
                 <>
-                  Join the platform.
+                  Create account.
                   <br />
-                  <span className="text-white/50">
-                    Students & professors, united.
-                  </span>
+                  <span className="text-white/50">Student or instructor.</span>
                 </>
               )}
             </h3>
 
             <p className="brand-element text-meta text-white/40 mb-8">
               {isRegister
-                ? "Already have an account? Sign in to continue."
-                : "Create an account to manage assignments and groups."}
+                ? "Use your email and password."
+                : "Pick a role to start."}
             </p>
 
             <button
@@ -597,7 +593,7 @@ export default function AuthPage() {
               className="brand-element inline-flex items-center justify-center h-11 px-8 rounded-xl text-meta font-medium text-white border border-white/20 hover:bg-white/10 transition-colors"
               style={{ willChange: "transform" }}
             >
-              {isRegister ? "Sign In" : "Sign Up"}
+              {isRegister ? "Sign in" : "Sign up"}
             </button>
           </div>
         </div>

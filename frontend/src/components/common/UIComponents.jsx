@@ -3,10 +3,14 @@ import Inbox from "lucide-react/dist/esm/icons/inbox";
 import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 
 const statusConfig = {
-  pending: { label: "Pending", className: "badge-neutral" },
-  link_visited: { label: "Visited", className: "badge-neutral" },
-  awaiting_confirmation: { label: "Awaiting", className: "badge-warning" },
-  submitted: { label: "Submitted", className: "badge-success" },
+  needs_group: { label: "Create group", className: "badge-warning" },
+  pending: { label: "Not started", className: "badge-neutral" },
+  group_ready: { label: "Team ready", className: "badge-neutral" },
+  link_visited: { label: "Link opened", className: "badge-neutral" },
+  awaiting_confirmation: { label: "Needs confirm", className: "badge-warning" },
+  submitted_waiting: { label: "Waiting on team", className: "badge-warning" },
+  submitted: { label: "Uploaded", className: "badge-success" },
+  missing_deadline: { label: "Missed setup", className: "badge-danger" },
 };
 
 const ragColorMap = {

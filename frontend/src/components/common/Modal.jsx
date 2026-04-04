@@ -66,7 +66,7 @@ export default function Modal({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[60] flex items-center justify-center p-6"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 sm:p-6"
       style={{
         background: "rgba(0, 0, 0, 0.2)",
         backdropFilter: "blur(6px)",
@@ -76,14 +76,14 @@ export default function Modal({
     >
       <div
         ref={modalRef}
-        className={`w-full ${sizeClasses[size]} rounded-2xl shadow-modal`}
+        className={`w-full ${sizeClasses[size]} rounded-[28px] shadow-modal overflow-hidden max-h-[calc(100vh-1.5rem)] sm:max-h-[min(88vh,820px)]`}
         style={{
           background: "#FFFFFF",
           border: "1px solid rgba(0, 0, 0, 0.06)",
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-border">
           <h3 className="text-section text-text-primary">{title}</h3>
           <button
             onClick={onClose}
@@ -95,7 +95,9 @@ export default function Modal({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-5 sm:px-6 py-4 sm:py-5 overflow-y-auto max-h-[calc(100vh-7rem)] sm:max-h-[calc(min(88vh,820px)-88px)]">
+          {children}
+        </div>
       </div>
     </div>
   );

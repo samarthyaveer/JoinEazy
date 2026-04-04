@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   BarChart,
@@ -8,6 +8,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import Users from "lucide-react/dist/esm/icons/users";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
@@ -17,6 +22,7 @@ import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
 import PageShell from "@/components/layout/PageShell";
 import Modal from "@/components/common/Modal";
+import ErrorBanner from "@/components/common/ErrorBanner";
 import {
   RagDot,
   StatCard,
@@ -25,8 +31,8 @@ import {
 } from "@/components/common/UIComponents";
 import { adminApi } from "@/services/api";
 
-// Hoisted for dark chart
-const tooltipStyle = {
+// ─── Chart theme ───────────────────────────────────────────────────────────────
+const TOOLTIP_STYLE = {
   background: "#FFFFFF",
   border: "1px solid rgba(0,0,0,0.08)",
   borderRadius: "12px",
@@ -34,9 +40,8 @@ const tooltipStyle = {
   fontSize: "12px",
   color: "#0F0F0F",
 };
-const xAxisTick = { fontSize: 11, fill: "#A0A0A0" };
-const yAxisTick = { fontSize: 11, fill: "#A0A0A0" };
-const axisLineStyle = { stroke: "rgba(0,0,0,0.06)" };
+const AXIS_TICK = { fontSize: 11, fill: "#A0A0A0" };
+const AXIS_LINE = { stroke: "rgba(0,0,0,0.06)" };
 
 const dateFmt = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -44,15 +49,14 @@ const dateFmt = new Intl.DateTimeFormat("en-IN", {
   year: "numeric",
 });
 
+// ─── Group row (expandable) ────────────────────────────────────────────────────
 function GroupRow({ group, onEvaluate }) {
   const [expanded, setExpanded] = useState(false);
 
   const memberCount = group.members?.length || 0;
   const submittedCount =
-    group.members?.reduce(
-      (acc, m) => acc + (m.submission_status === "submitted" ? 1 : 0),
-      0,
-    ) || 0;
+    group.members?.filter((m) => m.submission_status === "submitted").length ||
+    0;
   const ragStatus =
     submittedCount === memberCount
       ? "green"
@@ -60,11 +64,18 @@ function GroupRow({ group, onEvaluate }) {
         ? "amber"
         : "red";
 
+  const evalBadgeClass =
+    group.evaluation_status === "accepted" || group.evaluation_status === "graded"
+      ? "badge-success"
+      : group.evaluation_status === "rejected"
+        ? "badge-danger"
+        : "badge-neutral";
+
   return (
     <>
       <tr
         className="hover:bg-surface-overlay/50 transition-colors cursor-pointer"
-        onClick={() => setExpanded((prev) => !prev)}
+        onClick={() => setExpanded((p) => !p)}
       >
         <td className="px-5 py-4">
           <div className="flex items-center gap-2">
@@ -81,15 +92,7 @@ function GroupRow({ group, onEvaluate }) {
           {submittedCount}/{memberCount}
         </td>
         <td className="px-5 py-4">
-          <span
-            className={`badge ${
-              group.evaluation_status === "accepted"
-                ? "badge-success"
-                : group.evaluation_status === "rejected"
-                  ? "badge-danger"
-                  : "badge-neutral"
-            } capitalize`}
-          >
+          <span className={`badge ${evalBadgeClass} capitalize`}>
             {group.evaluation_status || "ungraded"}
           </span>
         </td>
@@ -102,9 +105,15 @@ function GroupRow({ group, onEvaluate }) {
         </td>
       </tr>
 
-      {expanded ? (
-        <>
-          {group.members?.map((m) => (
+      {expanded &&
+        group.members?.map((m) => {
+          const memberBadge =
+            m.evaluation_status === "accepted" || m.evaluation_status === "graded"
+              ? "badge-success"
+              : m.evaluation_status === "rejected"
+                ? "badge-danger"
+                : "badge-neutral";
+          return (
             <tr key={m.user_id} className="bg-surface-overlay/30">
               <td className="px-5 py-3 pl-10">
                 <div className="flex items-center gap-3">
@@ -135,15 +144,7 @@ function GroupRow({ group, onEvaluate }) {
                 </span>
               </td>
               <td className="px-5 py-3">
-                <span
-                  className={`badge ${
-                    m.evaluation_status === "accepted"
-                      ? "badge-success"
-                      : m.evaluation_status === "rejected"
-                        ? "badge-danger"
-                        : "badge-neutral"
-                  } capitalize`}
-                >
+                <span className={`badge ${memberBadge} capitalize`}>
                   {m.evaluation_status || "ungraded"}
                 </span>
               </td>
@@ -159,27 +160,146 @@ function GroupRow({ group, onEvaluate }) {
                 </button>
               </td>
             </tr>
-          ))}
-          <tr className="bg-surface-overlay/30 border-b border-border">
-            <td colSpan={4} className="px-5 py-3 pl-10">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEvaluate(group, null);
-                }}
-                className="text-meta text-accent-text hover:text-accent-hover font-medium transition-colors"
-              >
-                Review Entire Group
-              </button>
-            </td>
-          </tr>
-        </>
-      ) : null}
+          );
+        })}
+
+      {expanded && (
+        <tr className="bg-surface-overlay/30 border-b border-border">
+          <td colSpan={4} className="px-5 py-3 pl-10">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEvaluate(group, null);
+              }}
+              className="text-meta text-accent hover:text-accent-hover font-medium transition-colors"
+            >
+              Review whole group
+            </button>
+          </td>
+        </tr>
+      )}
     </>
   );
 }
 
-const INITIAL_EVAL_MODAL = {
+// ─── Overview bar chart ────────────────────────────────────────────────────────
+function SubmissionChart({ stats }) {
+  // Truncate long titles for axis labels
+  const data = useMemo(
+    () =>
+      stats.map((s) => ({
+        ...s,
+        shortTitle:
+          s.title.length > 18 ? `${s.title.slice(0, 16)}…` : s.title,
+        rate:
+          s.total_groups > 0
+            ? Math.round((s.submitted_count / s.total_groups) * 100)
+            : 0,
+      })),
+    [stats]
+  );
+
+  return (
+    <div className="card p-6">
+      <h2 className="text-section text-text-primary mb-5">
+        Submissions by assignment
+      </h2>
+      <div style={{ height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            barSize={28}
+            margin={{ top: 0, right: 0, bottom: 0, left: -20 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="rgba(0,0,0,0.04)"
+            />
+            <XAxis
+              dataKey="shortTitle"
+              tick={AXIS_TICK}
+              tickLine={false}
+              axisLine={AXIS_LINE}
+            />
+            <YAxis
+              tick={AXIS_TICK}
+              tickLine={false}
+              axisLine={false}
+              allowDecimals={false}
+            />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              cursor={{ fill: "rgba(0,85,255,0.04)" }}
+            />
+            <Bar
+              name="Submitted"
+              dataKey="submitted_count"
+              fill="#0055FF"
+              radius={[6, 6, 0, 0]}
+            />
+            <Bar
+              name="Total groups"
+              dataKey="total_groups"
+              fill="rgba(0,0,0,0.06)"
+              radius={[6, 6, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// ─── Completion rate pies ──────────────────────────────────────────────────────
+function CompletionRateMini({ stats }) {
+  const overall = useMemo(() => {
+    const total = stats.reduce((a, s) => a + (s.total_groups || 0), 0);
+    const submitted = stats.reduce((a, s) => a + (s.submitted_count || 0), 0);
+    return total > 0 ? Math.round((submitted / total) * 100) : 0;
+  }, [stats]);
+
+  const pieData = [
+    { name: "Submitted", value: overall, fill: "#22c55e" },
+    { name: "Pending", value: 100 - overall, fill: "rgba(0,0,0,0.06)" },
+  ];
+
+  return (
+    <div className="card p-6 flex flex-col items-center">
+      <h2 className="text-section text-text-primary mb-3 self-start">
+        Overall completion
+      </h2>
+      <div style={{ height: 160, width: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={72}
+              startAngle={90}
+              endAngle={-270}
+              dataKey="value"
+              strokeWidth={0}
+            >
+              {pieData.map(({ fill, name }) => (
+                <Cell key={name} fill={fill} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <p className="text-3xl font-bold text-text-primary tabular-nums -mt-6">
+        {overall}%
+      </p>
+      <p className="text-label text-text-tertiary mt-1">across all assignments</p>
+    </div>
+  );
+}
+
+// ─── Eval modal state ──────────────────────────────────────────────────────────
+const INITIAL_MODAL = {
   isOpen: false,
   submissionId: null,
   groupName: "",
@@ -188,28 +308,33 @@ const INITIAL_EVAL_MODAL = {
   status: "accepted",
   feedback: "",
   submitting: false,
+  error: "",
 };
 
+// ─── Main component ────────────────────────────────────────────────────────────
 export default function Analytics() {
   const { id } = useParams();
   const [analytics, setAnalytics] = useState(null);
   const [allStats, setAllStats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [evalModal, setEvalModal] = useState(INITIAL_EVAL_MODAL);
+  const [error, setError] = useState(null);
+  const [evalModal, setEvalModal] = useState(INITIAL_MODAL);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     async function load() {
       try {
+        setLoading(true);
+        setError(null);
         if (id) {
           const { data } = await adminApi.getAnalyticsAssignment(id);
-          setAnalytics(data);
+          setAnalytics(data.analytics);
         } else {
           const { data } = await adminApi.getAnalyticsStats();
           setAllStats(data.stats || []);
         }
       } catch (err) {
-        console.error("Failed to load analytics:", err);
+        setError(err.message || "Couldn't load analytics.");
       } finally {
         setLoading(false);
       }
@@ -227,34 +352,39 @@ export default function Analytics() {
       status: "accepted",
       feedback: "",
       submitting: false,
+      error: "",
     });
   }, []);
 
   const closeModal = useCallback(() => {
-    setEvalModal((prev) => ({ ...prev, isOpen: false }));
+    setEvalModal((p) => ({ ...p, isOpen: false }));
   }, []);
 
+  // ── BUG FIX: was sending `status` but route schema expects `evaluationStatus`
   const submitEvaluation = async (e) => {
     e.preventDefault();
-    setEvalModal((prev) => ({ ...prev, submitting: true }));
+    setEvalModal((p) => ({ ...p, submitting: true, error: "" }));
     try {
-      const payload = {
-        status: evalModal.status,
+      await adminApi.reviewSubmission(evalModal.submissionId, {
+        evaluationStatus: evalModal.status,   // ← correct field name
         feedback: evalModal.feedback,
-      };
-      if (evalModal.userId) payload.userId = evalModal.userId;
-      await adminApi.reviewSubmission(evalModal.submissionId, payload);
-      setEvalModal((prev) => ({ ...prev, isOpen: false }));
-      setRefreshTrigger((prev) => prev + 1);
+        ...(evalModal.userId ? { userId: evalModal.userId } : {}),
+      });
+      closeModal();
+      setRefreshTrigger((p) => p + 1);
     } catch (err) {
-      console.error("Review failed:", err);
-      setEvalModal((prev) => ({ ...prev, submitting: false }));
+      setEvalModal((p) => ({
+        ...p,
+        submitting: false,
+        error: err.message || "Review failed. Try again.",
+      }));
     }
   };
 
+  // ─── Loading / error states ──────────────────────────────────────────────────
   if (loading) {
     return (
-      <PageShell title="Analytics">
+      <PageShell title="Insights">
         <div className="flex justify-center py-20">
           <Spinner />
         </div>
@@ -262,17 +392,29 @@ export default function Analytics() {
     );
   }
 
-  if (id && analytics) {
-    const {
-      assignment,
-      groups = [],
-      ungrouped_students: ungroupedStudents = [],
-    } = analytics;
-    const totalGroups = groups.length;
-    const submittedGroups = groups.reduce(
-      (acc, g) => acc + (g.submission_status === "submitted" ? 1 : 0),
-      0,
+  if (error) {
+    return (
+      <PageShell title="Insights">
+        <ErrorBanner
+          message={error}
+          onRetry={() => setRefreshTrigger((p) => p + 1)}
+        />
+      </PageShell>
     );
+  }
+
+  // ─── Single assignment view ──────────────────────────────────────────────────
+  if (id && analytics) {
+    const { assignment, groups = [], ungroupedStudents = [] } = analytics;
+    const totalGroups = groups.length;
+    const submittedGroups = groups.filter(
+      (g) => g.submission_status === "submitted"
+    ).length;
+    const gradedGroups = groups.filter(
+      (g) =>
+        g.evaluation_status === "accepted" ||
+        g.evaluation_status === "graded"
+    ).length;
 
     return (
       <PageShell
@@ -281,12 +423,13 @@ export default function Analytics() {
         action={
           <Link to="/admin/analytics" className="btn-secondary btn-sm">
             <ArrowLeft size={14} aria-hidden="true" />
-            All Analytics
+            All analytics
           </Link>
         }
       >
+        {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Groups" value={totalGroups} />
+          <StatCard label="Total groups" value={totalGroups} />
           <StatCard
             label="Submitted"
             value={submittedGroups}
@@ -301,14 +444,44 @@ export default function Analytics() {
             }
           />
           <StatCard
-            label="Ungrouped"
-            value={ungroupedStudents.length}
-            sublabel="students"
+            label="Graded"
+            value={`${gradedGroups} / ${submittedGroups}`}
+            sublabel="reviewed submissions"
           />
         </div>
 
+        {/* Progress bar */}
+        {totalGroups > 0 && (
+          <div className="card p-5 mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-meta font-medium text-text-primary">
+                Submission progress
+              </p>
+              <span className="text-label text-text-tertiary font-mono tabular-nums">
+                {submittedGroups} / {totalGroups}
+              </span>
+            </div>
+            <div className="h-2 bg-surface-overlay rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent rounded-full transition-all duration-700"
+                style={{
+                  width: `${Math.round((submittedGroups / totalGroups) * 100)}%`,
+                }}
+              />
+            </div>
+            {ungroupedStudents.length > 0 && (
+              <p className="text-label text-semantic-warning mt-3 flex items-center gap-1.5">
+                <AlertTriangle size={13} aria-hidden="true" />
+                {ungroupedStudents.length} student
+                {ungroupedStudents.length === 1 ? "" : "s"} not in any group
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Groups table */}
         {groups.length === 0 ? (
-          <EmptyState icon={Users} title="No groups formed yet" />
+          <EmptyState icon={Users} title="No groups yet" />
         ) : (
           <div className="card overflow-hidden mb-8">
             <table className="w-full">
@@ -321,7 +494,7 @@ export default function Analytics() {
                     Submitted
                   </th>
                   <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">
-                    Evaluation
+                    Status
                   </th>
                   <th className="px-5 py-3 w-10"></th>
                 </tr>
@@ -335,16 +508,17 @@ export default function Analytics() {
           </div>
         )}
 
-        {ungroupedStudents.length > 0 ? (
+        {/* Ungrouped students */}
+        {ungroupedStudents.length > 0 && (
           <div className="card overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 bg-surface-overlay/50 border-b border-border">
+            <div className="flex items-center gap-2 px-5 py-3 bg-semantic-warning/5 border-b border-semantic-warning/20">
               <AlertTriangle
                 size={14}
                 className="text-semantic-warning"
                 aria-hidden="true"
               />
               <span className="text-meta font-medium text-text-primary">
-                Students Without a Group ({ungroupedStudents.length})
+                Ungrouped students ({ungroupedStudents.length})
               </span>
             </div>
             <div className="divide-y divide-border">
@@ -365,13 +539,10 @@ export default function Analytics() {
               ))}
             </div>
           </div>
-        ) : null}
+        )}
 
-        <Modal
-          isOpen={evalModal.isOpen}
-          onClose={closeModal}
-          title="Review Submission"
-        >
+        {/* Evaluation modal */}
+        <Modal isOpen={evalModal.isOpen} onClose={closeModal} title="Review submission">
           <form onSubmit={submitEvaluation} className="space-y-5">
             <div>
               <p className="text-label text-text-tertiary uppercase tracking-widest mb-1">
@@ -387,26 +558,28 @@ export default function Analytics() {
 
             <div>
               <label className="block text-meta font-medium text-text-primary mb-2">
-                Decision
+                Outcome
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {["accepted", "rejected"].map((s) => (
+                {[
+                  { value: "accepted", label: "Accept" },
+                  { value: "rejected", label: "Reject" },
+                ].map(({ value, label }) => (
                   <button
-                    key={s}
+                    key={value}
                     type="button"
                     onClick={() =>
-                      setEvalModal((prev) => ({ ...prev, status: s }))
+                      setEvalModal((p) => ({ ...p, status: value }))
                     }
-                    className={`px-4 text-meta font-medium rounded-xl border transition-all duration-200 capitalize ${
-                      evalModal.status === s
-                        ? s === "accepted"
+                    className={`px-4 text-meta font-medium rounded-xl border h-10 transition-all capitalize ${
+                      evalModal.status === value
+                        ? value === "accepted"
                           ? "border-semantic-success/30 bg-semantic-success/10 text-semantic-success"
                           : "border-semantic-danger/30 bg-semantic-danger/10 text-semantic-danger"
                         : "border-border-strong text-text-secondary hover:bg-surface-overlay"
                     }`}
-                    style={{ height: "40px" }}
                   >
-                    {s}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -421,25 +594,23 @@ export default function Analytics() {
               </label>
               <textarea
                 id="eval-feedback"
-                name="feedback"
                 className="input-field min-h-[100px] resize-y"
-                placeholder="Provide constructive feedback…"
+                placeholder="Add feedback for the student…"
                 value={evalModal.feedback}
                 onChange={(e) =>
-                  setEvalModal((prev) => ({
-                    ...prev,
-                    feedback: e.target.value,
-                  }))
+                  setEvalModal((p) => ({ ...p, feedback: e.target.value }))
                 }
               />
             </div>
 
+            {evalModal.error && (
+              <div className="text-meta text-semantic-danger bg-semantic-danger/8 border border-semantic-danger/15 rounded-xl px-4 py-3">
+                {evalModal.error}
+              </div>
+            )}
+
             <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="btn-secondary"
-              >
+              <button type="button" onClick={closeModal} className="btn-secondary">
                 Cancel
               </button>
               <button
@@ -447,7 +618,7 @@ export default function Analytics() {
                 className="btn-primary"
                 disabled={evalModal.submitting}
               >
-                {evalModal.submitting ? "Submitting…" : "Submit Review"}
+                {evalModal.submitting ? "Submitting…" : "Submit review"}
               </button>
             </div>
           </form>
@@ -456,68 +627,23 @@ export default function Analytics() {
     );
   }
 
+  // ─── All-assignments overview ────────────────────────────────────────────────
   return (
-    <PageShell
-      title="Analytics"
-      subtitle="Submission statistics across all assignments"
-    >
+    <PageShell title="Insights" subtitle="Submission stats across assignments">
       {allStats.length === 0 ? (
         <EmptyState
           icon={BarChart3}
           title="No data yet"
-          description="Create assignments to see analytics."
+          description="Create assignments to see stats here."
         />
       ) : (
         <div className="space-y-8">
-          <div className="card p-6">
-            <h2 className="text-section text-text-primary mb-5">
-              Submissions by Assignment
-            </h2>
-            <div style={{ height: 320 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={allStats}
-                  barSize={28}
-                  margin={{ top: 0, right: 0, bottom: 0, left: -20 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="rgba(0,0,0,0.04)"
-                  />
-                  <XAxis
-                    dataKey="title"
-                    tick={xAxisTick}
-                    tickLine={false}
-                    axisLine={axisLineStyle}
-                  />
-                  <YAxis
-                    tick={yAxisTick}
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    cursor={{ fill: "rgba(0,85,255,0.04)" }}
-                  />
-                  <Bar
-                    name="Submitted"
-                    dataKey="submitted_count"
-                    fill="#0055FF"
-                    radius={[6, 6, 0, 0]}
-                  />
-                  <Bar
-                    name="Total"
-                    dataKey="total_groups"
-                    fill="rgba(0,0,0,0.06)"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+            <SubmissionChart stats={allStats} />
+            <CompletionRateMini stats={allStats} />
           </div>
 
+          {/* Stats table */}
           <div className="card overflow-hidden">
             <table className="w-full">
               <thead>
@@ -552,29 +678,30 @@ export default function Analytics() {
                         {s.title}
                       </td>
                       <td
-                        className="px-5 py-4 font-mono text-meta text-text-secondary"
-                        style={{ fontVariantNumeric: "tabular-nums" }}
+                        className="px-5 py-4 font-mono text-meta text-text-secondary tabular-nums"
                       >
                         {s.total_groups}
                       </td>
                       <td
-                        className="px-5 py-4 font-mono text-meta text-text-secondary"
-                        style={{ fontVariantNumeric: "tabular-nums" }}
+                        className="px-5 py-4 font-mono text-meta text-text-secondary tabular-nums"
                       >
                         {s.submitted_count}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-1 bg-surface-overlay rounded-full overflow-hidden">
+                          <div className="w-20 h-1.5 bg-surface-overlay rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-accent rounded-full"
+                              className={`h-full rounded-full transition-all ${
+                                rate >= 80
+                                  ? "bg-semantic-success"
+                                  : rate >= 50
+                                    ? "bg-semantic-warning"
+                                    : "bg-semantic-danger"
+                              }`}
                               style={{ width: `${rate}%` }}
                             />
                           </div>
-                          <span
-                            className="text-label text-text-tertiary font-mono"
-                            style={{ fontVariantNumeric: "tabular-nums" }}
-                          >
+                          <span className="text-label text-text-tertiary font-mono tabular-nums">
                             {rate}%
                           </span>
                         </div>
@@ -584,7 +711,7 @@ export default function Analytics() {
                           to={`/admin/analytics/${s.id}`}
                           className="text-meta text-accent hover:text-accent-hover font-medium transition-colors"
                         >
-                          View
+                          Open
                         </Link>
                       </td>
                     </tr>

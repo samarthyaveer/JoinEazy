@@ -52,7 +52,7 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <PageShell title="Dashboard">
+      <PageShell title="Overview">
         <div className="flex justify-center py-20">
           <Spinner />
         </div>
@@ -70,21 +70,18 @@ export default function StudentDashboard() {
   );
 
   return (
-    <PageShell
-      title="Dashboard"
-      subtitle="Your assignments and groups at a glance"
-    >
+    <PageShell title="Overview" subtitle="Assignments and groups">
       {/* Stats row */}
       <div
         ref={statsRef}
         className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
       >
-        <StatCard label="Active Assignments" value={assignments.length} />
-        <StatCard label="My Groups" value={groups.length} />
+        <StatCard label="Active work" value={assignments.length} />
+        <StatCard label="My groups" value={groups.length} />
         <StatCard
-          label="Submitted"
+          label="Submitted groups"
           value={submittedCount}
-          sublabel={`of ${groups.length} assignments`}
+          sublabel={`of ${groups.length} groups`}
         />
       </div>
 
@@ -92,13 +89,13 @@ export default function StudentDashboard() {
         {/* Upcoming */}
         <div>
           <h2 className="text-section text-text-primary mb-4 sm:mb-5">
-            Upcoming Deadlines
+            Due soon
           </h2>
           {upcoming.length === 0 ? (
             <EmptyState
               icon={Calendar}
-              title="No upcoming deadlines"
-              description="All caught up!"
+              title="Nothing due soon"
+              description="You're all set."
             />
           ) : (
             <div ref={upcomingRef} className="card divide-y divide-border">
@@ -113,7 +110,7 @@ export default function StudentDashboard() {
                       {a.title}
                     </p>
                     <p className="text-meta text-text-secondary mt-1">
-                      Due{" "}
+                      Due on{" "}
                       {new Intl.DateTimeFormat("en-IN", {
                         day: "numeric",
                         month: "short",
@@ -135,16 +132,16 @@ export default function StudentDashboard() {
         {/* Groups */}
         <div>
           <h2 className="text-section text-text-primary mb-4 sm:mb-5">
-            My Groups
+            My groups
           </h2>
           {groups.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="No groups yet"
-              description="Create or join a group from the assignments page"
+              title="No groups"
+              description="Create or join one from assignments."
               action={
                 <Link to="/assignments" className="btn-primary btn-sm mt-4">
-                  View Assignments
+                  View assignments
                 </Link>
               }
             />
@@ -165,7 +162,7 @@ export default function StudentDashboard() {
                       <span className="font-mono tabular-nums">
                         {g.member_count}/{g.max_group_size}
                       </span>{" "}
-                      members
+                      members total
                     </p>
                   </div>
                   <StatusBadge status={g.submission_status} />

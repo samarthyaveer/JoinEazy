@@ -63,7 +63,9 @@ export default function AssignmentForm() {
             maxGroupSize: a.max_group_size,
           });
         })
-        .catch(() => setError("Failed to load assignment. Try refreshing."))
+        .catch(() =>
+          setError("Couldn't load assignment. Refresh and try again."),
+        )
         .finally(() => setLoading(false));
     }
   }, [id, isEdit]);
@@ -83,7 +85,7 @@ export default function AssignmentForm() {
     } catch (err) {
       setError(
         err.response?.data?.error ||
-          "Failed to save. Check your inputs and try again.",
+          "Couldn't save. Check your entries and try again.",
       );
     } finally {
       setSaving(false);
@@ -95,7 +97,7 @@ export default function AssignmentForm() {
 
   if (loading) {
     return (
-      <PageShell title="Assignment">
+      <PageShell title="Assignment form">
         <div className="flex justify-center py-20">
           <Spinner />
         </div>
@@ -104,21 +106,33 @@ export default function AssignmentForm() {
   }
 
   return (
-    <PageShell title={isEdit ? "Edit Assignment" : "New Assignment"}>
-      <div className="max-w-lg" ref={formRef}>
+    <PageShell
+      title={isEdit ? "Edit assignment" : "New assignment"}
+      subtitle="Set the brief, submission folder, and group size in one clean flow."
+    >
+      <div className="max-w-3xl" ref={formRef}>
         {error ? (
           <div className="mb-6 px-4 py-3 text-meta bg-semantic-danger/8 text-semantic-danger border border-semantic-danger/15 rounded-xl form-field">
             {error}
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
+        <div className="card p-5 sm:p-6 form-field mb-6">
+          <p className="text-body font-semibold text-text-primary">
+            A clear assignment card helps students create groups and submit faster.
+          </p>
+          <p className="text-meta text-text-secondary mt-2">
+            Add a strong title, a concise brief, the upload folder, and the max team size.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6 card p-5 sm:p-6" autoComplete="off">
           <div className="form-field">
             <label
               className="block text-meta font-medium text-text-primary mb-2"
               htmlFor="title"
             >
-              Title
+              Assignment title
             </label>
             <input
               id="title"
@@ -127,7 +141,7 @@ export default function AssignmentForm() {
               value={form.title}
               onChange={set("title")}
               required
-              placeholder="Assignment title…"
+              placeholder="Assignment title..."
             />
           </div>
 
@@ -136,7 +150,7 @@ export default function AssignmentForm() {
               className="block text-meta font-medium text-text-primary mb-2"
               htmlFor="description"
             >
-              Description
+              Details
             </label>
             <textarea
               id="description"
@@ -144,17 +158,17 @@ export default function AssignmentForm() {
               className="input-field min-h-[120px] resize-y"
               value={form.description}
               onChange={set("description")}
-              placeholder="Instructions and details for students…"
+              placeholder="Instructions for students..."
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 form-field">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 form-field">
             <div>
               <label
                 className="block text-meta font-medium text-text-primary mb-2"
                 htmlFor="dueDate"
               >
-                Due Date
+                Due date
               </label>
               <input
                 id="dueDate"
@@ -171,7 +185,7 @@ export default function AssignmentForm() {
                 className="block text-meta font-medium text-text-primary mb-2"
                 htmlFor="maxGroupSize"
               >
-                Max Group Size
+                Max group size
               </label>
               <input
                 id="maxGroupSize"
@@ -197,7 +211,7 @@ export default function AssignmentForm() {
               htmlFor="onedriveLink"
             >
               <span className="flex items-center gap-1.5">
-                OneDrive Submission Link
+                OneDrive submission link
                 <ExternalLink
                   size={12}
                   className="text-text-tertiary"
@@ -213,17 +227,17 @@ export default function AssignmentForm() {
               value={form.onedriveLink}
               onChange={set("onedriveLink")}
               required
-              placeholder="https://onedrive.live.com/…"
+              placeholder="https://onedrive.live.com/..."
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2 form-field">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 form-field">
             <button
               type="button"
               onClick={() => navigate(-1)}
               className="btn-secondary"
             >
-              Cancel
+              Back
             </button>
             <button
               ref={submitRef}
@@ -233,10 +247,10 @@ export default function AssignmentForm() {
               style={{ willChange: saving ? "auto" : "transform" }}
             >
               {saving
-                ? "Saving…"
+                ? "Saving now..."
                 : isEdit
-                  ? "Update Assignment"
-                  : "Create Assignment"}
+                  ? "Update assignment"
+                  : "Create assignment"}
             </button>
           </div>
         </form>

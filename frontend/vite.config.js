@@ -13,4 +13,24 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("react-router-dom") || id.includes("/react/") || id.includes("/react-dom/")) {
+            return "react-vendor";
+          }
+          if (id.includes("gsap")) {
+            return "motion";
+          }
+          if (id.includes("recharts")) {
+            return "charts";
+          }
+          if (id.includes("lucide-react")) {
+            return "icons";
+          }
+        },
+      },
+    },
+  },
 });
