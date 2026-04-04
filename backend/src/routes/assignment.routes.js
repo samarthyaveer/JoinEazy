@@ -24,6 +24,7 @@ const updateSchema = Joi.object({
 
 // Routes
 router.get('/', authenticate, assignmentController.getAll);
+router.get('/:id/stats', authenticate, authorize('admin'), assignmentController.getStats);
 router.get('/:id', authenticate, assignmentController.getById);
 router.post('/', authenticate, authorize('admin'), validate(createSchema), assignmentController.create);
 router.put('/:id', authenticate, authorize('admin'), validate(updateSchema), assignmentController.update);

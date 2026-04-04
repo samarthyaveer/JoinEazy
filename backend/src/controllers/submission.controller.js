@@ -91,7 +91,7 @@ async function getAllByAssignment(req, res, next) {
     const assignmentId = parseIntParam(req.params.assignmentId, 'assignmentId');
     const { status, sort } = req.query;
 
-    const submissions = await submissionService.getSubmissionsByAssignment(
+    const submissions = await submissionService.getAllSubmissionsForAssignment(
       assignmentId,
       { status, sort }
     );
@@ -105,11 +105,12 @@ async function getAllByAssignment(req, res, next) {
 async function saveGrade(req, res, next) {
   try {
     const id = parseIntParam(req.params.id);
-    const { scores, totalScore, feedback } = req.body;
+    const { scores, totalScore, totalMarks, feedback } = req.body;
 
-    const result = await submissionService.saveGradeDraft(id, {
+    const result = await submissionService.saveGrade(id, {
       scores,
       totalScore,
+      totalMarks,
       feedback,
       gradedBy: req.user.id,
     });
@@ -139,29 +140,26 @@ async function bulkPublish(req, res, next) {
   try {
     const { submissionIds } = req.body;
 
-    const results = await Promise.allSettled(
-      submissionIds.map((rawId) =>
-        submissionService.publishGrade(parseInt(rawId, 10), {
-          publishedBy: req.user.id,
-          publishedAt: new Date(),
-        })
-      )
+    const result = await submissionService.bulkPublishGrades(
+      submissionIds.map((id) => parseInt(id, 10)),
+      {
+        publishedBy: req.user.id,
+        publishedAt: new Date(),
+      }
     );
 
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.filter((r) => r.status === 'rejected').length;
-    const errors = results
-      .filter((r) => r.status === 'rejected')
-      .map((r, i) => ({ id: submissionIds[i], reason: r.reason?.message }));
-
-    res.json({ succeeded, failed, errors });
+    res.json({
+      succeeded: result.count,
+      failed: submissionIds.length - result.count,
+      errors: [],
+    });
   } catch (err) {
     next(err);
   }
 }
 
 // Review a submission (accept / reject with feedback)
-// Normalises both 'accepted'/'graded' → 'graded' and 'rejected' → 'rejected'
+// Normalises legacy 'graded' → 'accepted'
 async function review(req, res, next) {
   try {
     const id = parseIntParam(req.params.id);
@@ -169,7 +167,7 @@ async function review(req, res, next) {
 
     const normalised =
       evaluationStatus === 'accepted' || evaluationStatus === 'graded'
-        ? 'graded'
+        ? 'accepted'
         : 'rejected';
 
     const result = await submissionService.reviewSubmission(id, {
@@ -193,7 +191,7 @@ async function bulkReview(req, res, next) {
     const results = await Promise.allSettled(
       submissionIds.map((rawId) =>
         submissionService.reviewSubmission(parseInt(rawId, 10), {
-          evaluationStatus: 'graded',
+          evaluationStatus,
           feedback: feedback || '',
           reviewedBy: req.user.id,
           reviewedAt: new Date(),

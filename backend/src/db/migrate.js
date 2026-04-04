@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/db');
 
-async function migrate() {
+async function migrate({ closePool = true } = {}) {
   const migrationPath = path.join(__dirname, 'migrations', '001_init.sql');
   const sql = fs.readFileSync(migrationPath, 'utf-8');
 
@@ -17,11 +17,17 @@ async function migrate() {
     console.log('[Migrate] Migration 001_init.sql executed successfully.');
   } catch (err) {
     console.error('[Migrate] Migration failed:', err.message);
-    process.exit(1);
+    throw err;
   } finally {
-    await pool.end();
-    console.log('[Migrate] Connection closed.');
+    if (closePool) {
+      await pool.end();
+      console.log('[Migrate] Connection closed.');
+    }
   }
 }
 
-migrate();
+module.exports = { migrate };
+
+if (require.main === module) {
+  migrate().catch(() => process.exit(1));
+}

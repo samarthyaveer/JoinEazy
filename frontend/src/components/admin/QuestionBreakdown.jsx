@@ -156,16 +156,17 @@ export default function QuestionBreakdown({ questions = [] }) {
                           outerRadius={80}
                           paddingAngle={4}
                         >
-                          <Cell fill="rgba(22,163,74,0.6)" />
-                          <Cell fill="rgba(220,38,38,0.5)" />
+                          <Cell fill="rgb(var(--color-semantic-success) / 0.7)" />
+                          <Cell fill="rgb(var(--color-semantic-danger) / 0.6)" />
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            background: "#FFFFFF",
-                            border: "1px solid rgba(0,0,0,0.08)",
+                            background: "rgb(var(--color-surface-raised) / 0.96)",
+                            border: "1px solid rgb(var(--color-border) / 0.12)",
                             borderRadius: 12,
-                            boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+                            boxShadow: "var(--shadow-card)",
                             fontSize: 12,
+                            color: "rgb(var(--color-text-primary))",
                           }}
                         />
                       </PieChart>

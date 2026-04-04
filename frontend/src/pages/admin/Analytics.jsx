@@ -33,15 +33,15 @@ import { adminApi } from "@/services/api";
 
 // ─── Chart theme ───────────────────────────────────────────────────────────────
 const TOOLTIP_STYLE = {
-  background: "#FFFFFF",
-  border: "1px solid rgba(0,0,0,0.08)",
+  background: "rgb(var(--color-surface-raised) / 0.96)",
+  border: "1px solid rgb(var(--color-border) / 0.12)",
   borderRadius: "12px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+  boxShadow: "var(--shadow-card)",
   fontSize: "12px",
-  color: "#0F0F0F",
+  color: "rgb(var(--color-text-primary))",
 };
-const AXIS_TICK = { fontSize: 11, fill: "#A0A0A0" };
-const AXIS_LINE = { stroke: "rgba(0,0,0,0.06)" };
+const AXIS_TICK = { fontSize: 11, fill: "rgb(var(--color-text-tertiary))" };
+const AXIS_LINE = { stroke: "rgb(var(--color-border) / 0.16)" };
 
 const dateFmt = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -214,7 +214,7 @@ function SubmissionChart({ stats }) {
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
-              stroke="rgba(0,0,0,0.04)"
+              stroke="rgb(var(--color-border) / 0.12)"
             />
             <XAxis
               dataKey="shortTitle"
@@ -230,18 +230,18 @@ function SubmissionChart({ stats }) {
             />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
-              cursor={{ fill: "rgba(0,85,255,0.04)" }}
+              cursor={{ fill: "rgb(var(--color-accent) / 0.08)" }}
             />
             <Bar
               name="Submitted"
               dataKey="submitted_count"
-              fill="#0055FF"
+              fill="rgb(var(--color-accent))"
               radius={[6, 6, 0, 0]}
             />
             <Bar
               name="Total groups"
               dataKey="total_groups"
-              fill="rgba(0,0,0,0.06)"
+              fill="rgb(var(--color-text-tertiary) / 0.22)"
               radius={[6, 6, 0, 0]}
             />
           </BarChart>
@@ -260,8 +260,8 @@ function CompletionRateMini({ stats }) {
   }, [stats]);
 
   const pieData = [
-    { name: "Submitted", value: overall, fill: "#22c55e" },
-    { name: "Pending", value: 100 - overall, fill: "rgba(0,0,0,0.06)" },
+    { name: "Submitted", value: overall, fill: "rgb(var(--color-semantic-success))" },
+    { name: "Pending", value: 100 - overall, fill: "rgb(var(--color-text-tertiary) / 0.2)" },
   ];
 
   return (
@@ -594,6 +594,7 @@ export default function Analytics() {
               </label>
               <textarea
                 id="eval-feedback"
+                name="evaluationFeedback"
                 className="input-field min-h-[100px] resize-y"
                 placeholder="Add feedback for the student…"
                 value={evalModal.feedback}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import LayoutDashboard from "lucide-react/dist/esm/icons/layout-dashboard";
 import FileText from "lucide-react/dist/esm/icons/file-text";
 import Users from "lucide-react/dist/esm/icons/users";
@@ -61,24 +62,24 @@ export default function Sidebar({ isOpen, onClose }) {
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] bg-white/96 backdrop-blur-xl border-r border-black/8 shadow-2xl transform transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] bg-surface-raised/96 backdrop-blur-2xl border-r border-border shadow-2xl transform transition-transform duration-300 ease-out lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between px-5 py-5 border-b border-black/6">
+          <div className="flex items-center justify-between px-5 py-5 border-b border-border">
             <div className="flex items-center gap-3">
               <img src="/joineazy.png" alt="JoinEazy Logo" width={30} height={30} />
               <div>
                 <p className="text-body font-semibold text-text-primary">JoinEazy</p>
-                <p className="text-label text-text-tertiary">
+                <p className="text-label text-text-secondary">
                   {user?.role === "admin" ? "Instructor workspace" : "Student workspace"}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 inline-flex items-center justify-center rounded-2xl text-text-tertiary hover:text-text-primary hover:bg-surface-overlay transition-colors"
+              className="w-10 h-10 inline-flex items-center justify-center rounded-2xl text-text-secondary hover:text-text-primary hover:bg-surface-overlay transition-colors"
               aria-label="Close sidebar"
             >
               <X size={18} />
@@ -95,10 +96,10 @@ export default function Sidebar({ isOpen, onClose }) {
                   end={link.exact}
                   onClick={handleNavClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-2xl px-4 py-3 text-meta font-medium transition-all ${
+                    `flex items-center gap-3 rounded-[20px] px-4 py-3 text-meta font-medium transition-colors ${
                       isActive
                         ? "bg-accent text-white shadow-lg shadow-accent/15"
-                        : "text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
+                        : "text-text-primary hover:bg-surface-overlay hover:text-text-primary"
                     }`
                   }
                 >
@@ -109,8 +110,10 @@ export default function Sidebar({ isOpen, onClose }) {
             })}
           </nav>
 
-          <div className="border-t border-black/6 px-4 py-4">
-            <div className="rounded-[24px] border border-black/6 bg-surface-overlay/70 p-4">
+          <div className="border-t border-border px-4 py-4 space-y-3">
+            <ThemeToggle />
+
+            <div className="rounded-[24px] border border-border bg-surface-overlay/75 p-4">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-accent text-white flex items-center justify-center text-meta font-semibold">
                   {getUserInitials(user?.full_name)}
@@ -137,8 +140,8 @@ export default function Sidebar({ isOpen, onClose }) {
       </aside>
 
       <div className="hidden lg:flex fixed left-1/2 bottom-5 -translate-x-1/2 z-40">
-        <div className="flex items-center gap-2 rounded-[30px] border border-black/8 bg-white/92 px-3 py-3 shadow-[0_22px_50px_rgba(15,15,15,0.14)] backdrop-blur-xl">
-          <div className="hidden xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/70 px-4 py-3 border border-black/6">
+        <div className="flex items-center gap-2 rounded-[32px] border border-border bg-surface-raised/88 px-3 py-3 shadow-[0_22px_50px_rgba(15,15,15,0.14)] backdrop-blur-2xl">
+          <div className="hidden xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/72 px-4 py-3 border border-border">
             <img src="/joineazy.png" alt="JoinEazy Logo" width={28} height={28} />
             <div>
               <p className="text-meta font-semibold text-text-primary leading-none">
@@ -159,7 +162,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   to={link.to}
                   end={link.exact}
                   className={({ isActive }) =>
-                    `flex min-w-[92px] flex-col items-center justify-center gap-1 rounded-[22px] px-4 py-3 text-label font-medium transition-all ${
+                    `flex min-w-[92px] flex-col items-center justify-center gap-1 rounded-[22px] px-4 py-3 text-label font-medium transition-colors ${
                       isActive
                         ? "bg-accent text-white shadow-lg shadow-accent/20"
                         : "text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
@@ -173,10 +176,12 @@ export default function Sidebar({ isOpen, onClose }) {
             })}
           </div>
 
-          <div className="w-px h-12 bg-black/8 mx-1" />
+          <div className="w-px h-12 bg-border mx-1" />
 
           <div className="flex items-center gap-2">
-            <div className="hidden 2xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/70 px-4 py-3 border border-black/6">
+            <ThemeToggle compact />
+
+            <div className="hidden 2xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/72 px-4 py-3 border border-border">
               <div className="w-10 h-10 rounded-2xl bg-accent text-white flex items-center justify-center text-meta font-semibold">
                 {getUserInitials(user?.full_name)}
               </div>

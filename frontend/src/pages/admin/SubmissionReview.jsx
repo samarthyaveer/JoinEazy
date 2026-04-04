@@ -11,8 +11,9 @@ import { timeAgo } from "@/utils/time";
 
 const FILTERS = [
   { id: "all", label: "All work" },
-  { id: "ungraded", label: "Needs grade" },
-  { id: "graded", label: "Scored" },
+  { id: "ungraded", label: "Needs grading" },
+  { id: "draft", label: "Drafts" },
+  { id: "graded", label: "Published" },
   { id: "late", label: "Late work" },
 ];
 
@@ -74,7 +75,7 @@ export default function SubmissionReview() {
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === parsed.id
-            ? { ...s, status: "graded", totalScore: parsed.totalScore }
+            ? { ...s, status: "published", totalScore: parsed.totalScore }
             : s,
         ),
       );
@@ -88,7 +89,9 @@ export default function SubmissionReview() {
     let list = submissions.slice();
 
     if (filter === "graded") {
-      list = list.filter((s) => s.status === "graded");
+      list = list.filter((s) => s.status === "published");
+    } else if (filter === "draft") {
+      list = list.filter((s) => s.status === "draft");
     } else if (filter === "ungraded") {
       list = list.filter((s) => s.status === "ungraded");
     } else if (filter === "late") {
@@ -97,7 +100,9 @@ export default function SubmissionReview() {
 
     if (search) {
       list = list.filter((s) =>
-        s.studentName.toLowerCase().includes(search.toLowerCase()),
+        `${s.studentName} ${s.groupName || ""}`
+          .toLowerCase()
+          .includes(search.toLowerCase()),
       );
     }
 
@@ -151,17 +156,28 @@ export default function SubmissionReview() {
 
     try {
       if (bulkAction === "publish") {
-        await bulkPublishGrades(ids);
+        const publishableIds = filtered
+          .filter((submission) => ids.includes(submission.id))
+          .filter((submission) => submission.status === "draft")
+          .map((submission) => submission.id);
+
+        if (!publishableIds.length) {
+          setNotice("Select submissions with saved draft grades first.");
+          setShowBulkModal(false);
+          return;
+        }
+
+        const { data } = await bulkPublishGrades(publishableIds);
         setSubmissions((prev) =>
           prev.map((s) =>
-            ids.includes(s.id) ? { ...s, status: "graded" } : s,
+            publishableIds.includes(s.id) ? { ...s, status: "published" } : s,
           ),
         );
-        setNotice("Grades released.");
-      } else if (bulkAction === "reviewed") {
-        setNotice("Marked as reviewed.");
-      } else if (bulkAction === "reminder") {
-        setNotice("Reminders queued.");
+        setNotice(
+          data?.succeeded
+            ? `${data.succeeded} grade${data.succeeded === 1 ? "" : "s"} released.`
+            : "No draft grades were released.",
+        );
       }
       setBulkAction("");
       setSelectedIds(new Set());
@@ -211,16 +227,22 @@ export default function SubmissionReview() {
               aria-hidden="true"
             />
             <input
+              id="submission-search"
+              name="submissionSearch"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="input-field pl-9"
-              placeholder="Search students"
+              placeholder="Search groups or students"
+              aria-label="Search submissions"
             />
           </div>
           <select
+            id="submission-sort"
+            name="submissionSort"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             className="input-field"
+            aria-label="Sort submissions"
           >
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
@@ -240,14 +262,15 @@ export default function SubmissionReview() {
           </span>
           <div className="flex items-center gap-2">
             <select
+              id="bulk-action"
+              name="bulkAction"
               value={bulkAction}
               onChange={(e) => setBulkAction(e.target.value)}
               className="input-field"
+              aria-label="Select bulk action"
             >
               <option value="">Bulk action</option>
-              <option value="reviewed">Mark reviewed</option>
               <option value="publish">Release scores</option>
-              <option value="reminder">Send reminders</option>
             </select>
             <button
               className="btn-primary btn-sm"
@@ -283,15 +306,18 @@ export default function SubmissionReview() {
               <tr className="border-b border-border bg-surface-overlay/60 text-label text-text-tertiary uppercase tracking-widest">
                 <th className="px-4 py-3 text-left">
                   <input
+                    id="select-all-submissions"
+                    name="selectAllSubmissions"
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleSelectAll}
+                    aria-label="Select all submissions"
                   />
                 </th>
-                <th className="px-4 py-3 text-left">Student name</th>
-                <th className="px-4 py-3 text-left">Submitted on</th>
-                <th className="px-4 py-3 text-left">Score/Max</th>
-                <th className="px-4 py-3 text-left">Alerts</th>
+                <th className="px-4 py-3 text-left">Group</th>
+                <th className="px-4 py-3 text-left">Submitted</th>
+                <th className="px-4 py-3 text-left">Grade</th>
+                <th className="px-4 py-3 text-left">State</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -312,9 +338,12 @@ export default function SubmissionReview() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <input
+                        id={`submission-select-${submission.id}`}
+                        name={`submissionSelect-${submission.id}`}
                         type="checkbox"
                         checked={selectedIds.has(submission.id)}
                         onChange={() => toggleSelect(submission.id)}
+                        aria-label={`Select ${submission.groupName || submission.studentName}`}
                       />
                     </td>
                     <td className="px-4 py-4">
@@ -329,19 +358,28 @@ export default function SubmissionReview() {
                         </div>
                         <div>
                           <p className="text-body font-medium text-text-primary">
-                            {submission.studentName}
+                            {submission.groupName || submission.studentName}
                           </p>
                           <p className="text-label text-text-tertiary">
-                            {submission.studentEmail}
+                            {submission.studentName}
+                            {submission.studentEmail
+                              ? ` · ${submission.studentEmail}`
+                              : ""}
+                          </p>
+                          <p className="text-label text-text-tertiary">
+                            {submission.submittedMembers}/{submission.memberCount} members submitted
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-meta text-text-secondary">
-                      {timeAgo(submission.submitted_at)}
+                      {submission.submitted_at
+                        ? timeAgo(submission.submitted_at)
+                        : "Not submitted"}
                     </td>
                     <td className="px-4 py-4">
-                      {submission.status === "graded" ? (
+                      {submission.status === "published" ||
+                      submission.status === "draft" ? (
                         <span className="text-meta font-medium text-text-primary">
                           {scoreLabel}
                         </span>
@@ -351,12 +389,24 @@ export default function SubmissionReview() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-2">
+                        {submission.status === "published" ? (
+                          <span className="badge badge-success">Published</span>
+                        ) : null}
+                        {submission.status === "draft" ? (
+                          <span className="badge badge-warning">Draft</span>
+                        ) : null}
                         {submission.isLate ? (
                           <span className="badge badge-warning">Late work</span>
                         ) : null}
-                        {submission.regradeRequested ? (
-                          <span className="badge border border-purple-200 text-purple-700 bg-purple-50">
-                            Regrade requested
+                        {submission.evaluationStatus !== "ungraded" ? (
+                          <span
+                            className={`badge ${
+                              submission.evaluationStatus === "accepted"
+                                ? "badge-success"
+                                : "badge-danger"
+                            } capitalize`}
+                          >
+                            {submission.evaluationStatus}
                           </span>
                         ) : null}
                       </div>
@@ -376,7 +426,8 @@ export default function SubmissionReview() {
         size="sm"
       >
         <p className="text-meta text-text-secondary">
-          Apply "{bulkAction}" to {selectedCount} items?
+          Apply "{bulkAction}" to {selectedCount} selected items? Only draft
+          grades will be published.
         </p>
         <div className="flex justify-end gap-3 mt-6">
           <button

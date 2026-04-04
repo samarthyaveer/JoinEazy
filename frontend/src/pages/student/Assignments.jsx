@@ -157,12 +157,13 @@ export default function StudentAssignments() {
   return (
     <PageShell
       title="Assignments"
-      subtitle="Everything you need is grouped by what needs action next."
+      subtitle="See what needs action next, without digging through clutter."
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard label="Assigned work" value={assignments.length} />
         <StatCard label="Due this week" value={stats.dueSoon} />
         <StatCard
+          className="col-span-2 xl:col-span-1"
           label="Groups ready"
           value={stats.grouped}
           sublabel={`${stats.submitted} fully submitted`}
@@ -176,7 +177,7 @@ export default function StudentAssignments() {
           description="Once your professor posts work, it will show up here with group and submission guidance."
         />
       ) : (
-        <div ref={cardsRef} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div ref={cardsRef} className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5">
           {assignments.map((assignment) => {
             const state = getAssignmentState(assignment);
             const isPastDue = new Date(assignment.due_date) < new Date();
@@ -188,7 +189,7 @@ export default function StudentAssignments() {
               <article
                 key={assignment.id}
                 data-assignment-card
-                className="card p-5 sm:p-6 content-auto"
+                className="card p-4 sm:p-5 lg:p-6 content-auto"
               >
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -214,7 +215,7 @@ export default function StudentAssignments() {
                     </Link>
                   </div>
 
-                  <div className="rounded-[24px] border border-black/6 bg-surface-overlay/65 p-4 sm:p-5">
+                  <div className="rounded-[24px] border border-border bg-surface-overlay/65 p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div>
                         <p className="text-meta font-semibold text-text-primary">
@@ -224,7 +225,7 @@ export default function StudentAssignments() {
                           {state.description}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-black/6 bg-white/80 px-4 py-3 min-w-[190px]">
+                      <div className="rounded-2xl border border-border bg-surface-raised/82 px-4 py-3 min-w-[190px]">
                         <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                           <CalendarClock size={14} aria-hidden="true" />
                           Due
@@ -243,8 +244,8 @@ export default function StudentAssignments() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="rounded-[22px] border border-black/6 bg-white/75 p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
                       <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                         <Users size={14} aria-hidden="true" />
                         Group
@@ -259,7 +260,7 @@ export default function StudentAssignments() {
                       </p>
                     </div>
 
-                    <div className="rounded-[22px] border border-black/6 bg-white/75 p-4">
+                    <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">
                         Team progress
                       </p>

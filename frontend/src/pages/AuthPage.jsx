@@ -1,11 +1,13 @@
 import { useState, useRef, useLayoutEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 import { useMagnetic } from "@/hooks/useGsap";
 
 export default function AuthPage() {
   const { login, register: registerUser } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isRegister, setIsRegister] = useState(
@@ -33,6 +35,17 @@ export default function AuthPage() {
   const registerFormRef = useRef(null);
   const orbRef = useRef(null);
   const submitRef = useMagnetic(0.2);
+
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("dark");
+    root.style.colorScheme = "light";
+
+    return () => {
+      root.classList.toggle("dark", theme === "dark");
+      root.style.colorScheme = theme;
+    };
+  }, [theme]);
 
   // Animate the sliding panel
   const animateSlide = useCallback((toRegister) => {
@@ -218,10 +231,8 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-surface relative overflow-hidden">
-      {/* Noise overlay */}
       <div className="noise-overlay" />
 
-      {/* Background orbs */}
       <div
         ref={orbRef}
         className="gradient-orb"
@@ -246,15 +257,12 @@ export default function AuthPage() {
         }}
       />
 
-      {/* Main auth container */}
       <div
         ref={containerRef}
         className="relative w-full max-w-md lg:max-w-[920px] lg:min-h-[580px] rounded-2xl lg:rounded-3xl overflow-hidden shadow-modal"
         style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)" }}
       >
-        {/* Two form panels side by side on desktop, stacked/hidden on mobile */}
         <div className="flex flex-col lg:flex-row lg:min-h-[580px]">
-          {/* LEFT: Sign In Form */}
           <div
             className={`w-full lg:w-1/2 items-center justify-center p-6 sm:p-10 lg:p-14 transition-opacity duration-400 ${isRegister ? "hidden lg:flex lg:opacity-40 lg:pointer-events-none" : "flex opacity-100 pointer-events-auto"}`}
           >
@@ -353,7 +361,6 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* RIGHT: Register Form */}
           <div
             className={`w-full lg:w-1/2 items-center justify-center p-6 sm:p-10 lg:p-14 transition-opacity duration-400 ${!isRegister ? "hidden lg:flex lg:opacity-40 lg:pointer-events-none" : "flex opacity-100 pointer-events-auto"}`}
           >
@@ -534,7 +541,6 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* GSAP Sliding Overlay Panel — the branding panel that slides (Desktop Only) */}
         <div
           ref={overlayRef}
           className="hidden lg:flex absolute inset-y-0 right-0 w-1/2 items-center justify-center p-12 z-20"

@@ -173,3 +173,22 @@ CREATE TRIGGER trg_assignments_updated
     BEFORE UPDATE ON assignments
     FOR EACH ROW
     EXECUTE FUNCTION update_modified_column();
+
+
+-- ============================================
+-- Backfill columns needed for professor grading
+-- Safe to re-run on existing databases
+-- ============================================
+ALTER TABLE submissions
+    ADD COLUMN IF NOT EXISTS graded_score NUMERIC(10, 2),
+    ADD COLUMN IF NOT EXISTS total_marks NUMERIC(10, 2),
+    ADD COLUMN IF NOT EXISTS grade_data JSONB,
+    ADD COLUMN IF NOT EXISTS grade_feedback TEXT,
+    ADD COLUMN IF NOT EXISTS graded_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS graded_by INTEGER REFERENCES users(id),
+    ADD COLUMN IF NOT EXISTS grade_published BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS published_by INTEGER REFERENCES users(id);
+
+CREATE INDEX IF NOT EXISTS idx_submissions_grade_published
+    ON submissions(grade_published);

@@ -108,25 +108,20 @@ export default function AssignmentForm() {
   return (
     <PageShell
       title={isEdit ? "Edit assignment" : "New assignment"}
-      subtitle="Set the brief, submission folder, and group size in one clean flow."
+      subtitle="Set the brief, due date, and submission folder in one centered flow."
     >
-      <div className="max-w-3xl" ref={formRef}>
+      <div className="mx-auto w-full max-w-3xl" ref={formRef}>
         {error ? (
           <div className="mb-6 px-4 py-3 text-meta bg-semantic-danger/8 text-semantic-danger border border-semantic-danger/15 rounded-xl form-field">
             {error}
           </div>
         ) : null}
 
-        <div className="card p-5 sm:p-6 form-field mb-6">
-          <p className="text-body font-semibold text-text-primary">
-            A clear assignment card helps students create groups and submit faster.
-          </p>
-          <p className="text-meta text-text-secondary mt-2">
-            Add a strong title, a concise brief, the upload folder, and the max team size.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6 card p-5 sm:p-6" autoComplete="off">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 card p-5 sm:p-7 lg:p-8"
+          autoComplete="off"
+        >
           <div className="form-field">
             <label
               className="block text-meta font-medium text-text-primary mb-2"

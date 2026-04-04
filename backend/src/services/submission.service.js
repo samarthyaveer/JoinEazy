@@ -1,14 +1,25 @@
 const crypto = require('crypto');
 const { query } = require('../config/db');
-const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/errors');
+const {
+  NotFoundError,
+  BadRequestError,
+  ForbiddenError,
+} = require('../utils/errors');
 
 const TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+const toNumber = (value) =>
+  value === null || value === undefined ? null : Number(value);
+
+const deriveReviewState = (row) => {
+  if (row.status !== 'submitted') return row.status;
+  if (row.grade_published) return 'published';
+  if (row.graded_score !== null) return 'draft';
+  return 'ungraded';
+};
+
 // ── Student gates ─────────────────────────────────────────────────────────────
 
-/**
- * Gate 1: Record that a student clicked the OneDrive link.
- */
 async function trackLinkClick(submissionId, userId) {
   const sub = await getSubmissionWithAuth(submissionId, userId);
 
@@ -30,7 +41,8 @@ async function trackLinkClick(submissionId, userId) {
 
   if (sub.status === 'pending') {
     await query(
-      `UPDATE submissions SET status = 'link_visited', link_clicked_at = NOW(), link_clicked_by = $1
+      `UPDATE submissions
+       SET status = 'link_visited', link_clicked_at = NOW(), link_clicked_by = $1
        WHERE id = $2`,
       [userId, submissionId]
     );
@@ -44,9 +56,6 @@ async function trackLinkClick(submissionId, userId) {
   return { message: 'Link click recorded' };
 }
 
-/**
- * Gate 2: Initiate submission (generates confirmation token).
- */
 async function initiateSubmission(submissionId, userId) {
   const sub = await getSubmissionWithAuth(submissionId, userId);
 
@@ -72,7 +81,8 @@ async function initiateSubmission(submissionId, userId) {
   );
 
   await query(
-    `UPDATE submissions SET status = 'awaiting_confirmation', initiated_at = NOW(), initiated_by = $1
+    `UPDATE submissions
+     SET status = 'awaiting_confirmation', initiated_at = NOW(), initiated_by = $1
      WHERE id = $2 AND status != 'submitted'`,
     [userId, submissionId]
   );
@@ -84,9 +94,6 @@ async function initiateSubmission(submissionId, userId) {
   };
 }
 
-/**
- * Gate 3: Confirm submission with token and assignment title verification.
- */
 async function confirmSubmission(submissionId, userId, { token, assignmentTitle }) {
   const sub = await getSubmissionWithAuth(submissionId, userId);
 
@@ -134,7 +141,8 @@ async function confirmSubmission(submissionId, userId, { token, assignmentTitle 
   );
 
   const pendingMembers = await query(
-    `SELECT COUNT(*) AS count FROM group_members
+    `SELECT COUNT(*) AS count
+     FROM group_members
      WHERE group_id = $1 AND submission_status != 'submitted'`,
     [sub.group_id]
   );
@@ -155,28 +163,52 @@ async function confirmSubmission(submissionId, userId, { token, assignmentTitle 
 
 // ── Admin: read ───────────────────────────────────────────────────────────────
 
-/**
- * Get full submission details for a single submission (admin view).
- */
 async function getSubmission(submissionId) {
   const result = await query(
-    `SELECT s.*,
-            a.title AS assignment_title,
-            a.due_date,
-            a.onedrive_link,
-            g.name AS group_name
+    `SELECT
+       s.id,
+       s.assignment_id,
+       s.group_id,
+       s.status,
+       s.evaluation_status,
+       s.feedback AS evaluation_feedback,
+       s.confirmed_at,
+       s.graded_score,
+       s.total_marks,
+       s.grade_feedback,
+       s.grade_published,
+       s.graded_at,
+       s.published_at,
+       a.title AS assignment_title,
+       a.description AS assignment_description,
+       a.due_date,
+       a.onedrive_link,
+       g.name AS group_name,
+       (s.confirmed_at > a.due_date) AS is_late,
+       rep.full_name AS student_name,
+       rep.email AS student_email
      FROM submissions s
      JOIN assignments a ON a.id = s.assignment_id
-     JOIN groups g      ON g.id = s.group_id
+     JOIN groups g ON g.id = s.group_id
+     LEFT JOIN LATERAL (
+       SELECT u.full_name, u.email
+       FROM group_members gm2
+       JOIN users u ON u.id = gm2.user_id
+       WHERE gm2.group_id = g.id
+       ORDER BY CASE WHEN gm2.role = 'leader' THEN 0 ELSE 1 END, gm2.joined_at ASC
+       LIMIT 1
+     ) rep ON TRUE
      WHERE s.id = $1`,
     [submissionId]
   );
 
-  if (result.rows.length === 0) throw new NotFoundError('Submission not found');
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Submission not found');
+  }
 
-  const submission = result.rows[0];
+  const row = result.rows[0];
 
-  const clickLog = await query(
+  const clickLogResult = await query(
     `SELECT lcl.clicked_at, u.full_name, u.email
      FROM link_click_log lcl
      JOIN users u ON u.id = lcl.user_id
@@ -184,56 +216,110 @@ async function getSubmission(submissionId) {
      ORDER BY lcl.clicked_at DESC`,
     [submissionId]
   );
-  submission.click_log = clickLog.rows;
 
-  // Attach group members with their individual submission / evaluation status
-  const members = await query(
-    `SELECT gm.user_id, u.full_name, u.email, gm.role,
-            gm.submission_status, gm.evaluation_status, gm.feedback, gm.submitted_at
+  const membersResult = await query(
+    `SELECT
+       gm.user_id,
+       u.full_name,
+       u.email,
+       gm.role,
+       gm.submission_status,
+       gm.evaluation_status,
+       gm.feedback,
+       gm.submitted_at
      FROM group_members gm
      JOIN users u ON u.id = gm.user_id
      WHERE gm.group_id = $1
-     ORDER BY gm.joined_at ASC`,
-    [submission.group_id]
+     ORDER BY CASE WHEN gm.role = 'leader' THEN 0 ELSE 1 END, gm.joined_at ASC`,
+    [row.group_id]
   );
-  submission.members = members.rows;
 
-  return submission;
+  const members = membersResult.rows.map((member) => ({
+    ...member,
+    submitted_at: member.submitted_at,
+  }));
+
+  return {
+    id: row.id,
+    assignmentId: row.assignment_id,
+    assignmentTitle: row.assignment_title,
+    assignmentDescription: row.assignment_description,
+    dueDate: row.due_date,
+    onedriveLink: row.onedrive_link,
+    groupId: row.group_id,
+    groupName: row.group_name,
+    student: {
+      name: row.student_name || row.group_name || 'Unknown group',
+      email: row.student_email || '',
+    },
+    status: row.status,
+    reviewState: deriveReviewState(row),
+    evaluationStatus: row.evaluation_status,
+    evaluationFeedback: row.evaluation_feedback || '',
+    submitted_at: row.confirmed_at,
+    submittedAt: row.confirmed_at,
+    isLate: Boolean(row.is_late),
+    totalScore: toNumber(row.graded_score),
+    totalMarks: toNumber(row.total_marks),
+    feedback: row.grade_feedback || '',
+    gradePublished: Boolean(row.grade_published),
+    gradedAt: row.graded_at,
+    publishedAt: row.published_at,
+    clickLog: clickLogResult.rows,
+    members,
+    memberCount: members.length,
+    submittedMembers: members.filter((member) => member.submission_status === 'submitted').length,
+  };
 }
 
-/**
- * Get the current student's submission for an assignment.
- */
 async function getSubmissionByAssignmentAndUser(assignmentId, userId) {
   const result = await query(
-    `SELECT s.*, gm.submission_status AS my_submission_status
+    `SELECT
+       s.*,
+       gm.submission_status AS my_submission_status,
+       gm.evaluation_status AS my_evaluation_status,
+       gm.feedback AS my_feedback
      FROM submissions s
      JOIN group_members gm ON gm.group_id = s.group_id
      WHERE s.assignment_id = $1 AND gm.user_id = $2
      LIMIT 1`,
     [assignmentId, userId]
   );
-  return result.rows[0] || null;
+
+  const row = result.rows[0];
+  if (!row) return null;
+
+  return {
+    ...row,
+    graded_score: row.grade_published ? row.graded_score : null,
+    total_marks: row.grade_published ? row.total_marks : null,
+    grade_feedback: row.grade_published ? row.grade_feedback : null,
+  };
 }
 
-/**
- * Get ALL submissions for an assignment (admin only).
- * Returns a flat list with the group leader / first member name for display.
- */
-async function getAllSubmissionsForAssignment(assignmentId) {
+async function getAllSubmissionsForAssignment(assignmentId, options = {}) {
+  const { status, sort } = options;
+
   const result = await query(
     `SELECT
        s.id,
        s.status,
        s.evaluation_status,
-       s.feedback,
+       s.confirmed_at AS submitted_at,
        s.graded_score,
        s.total_marks,
+       s.grade_feedback,
        s.grade_published,
-       s.confirmed_at AS submitted_at,
-       g.name         AS group_name,
-       a.title        AS assignment_title,
-       -- Representative student name (group leader)
+       s.published_at,
+       g.name AS group_name,
+       (s.confirmed_at > a.due_date) AS is_late,
+       (SELECT COUNT(*)::int FROM group_members gm_count WHERE gm_count.group_id = g.id) AS member_count,
+       (
+         SELECT COUNT(*)::int
+         FROM group_members gm_count
+         WHERE gm_count.group_id = g.id
+           AND gm_count.submission_status = 'submitted'
+       ) AS submitted_members,
        (SELECT u.full_name
         FROM group_members gm2
         JOIN users u ON u.id = gm2.user_id
@@ -245,69 +331,111 @@ async function getAllSubmissionsForAssignment(assignmentId) {
         JOIN users u ON u.id = gm2.user_id
         WHERE gm2.group_id = g.id
         ORDER BY CASE WHEN gm2.role = 'leader' THEN 0 ELSE 1 END, gm2.joined_at ASC
-        LIMIT 1) AS student_email,
-       -- Late flag
-       (s.confirmed_at > a.due_date) AS is_late,
-       -- Pending regrade request flag
-       s.regrade_requested
+        LIMIT 1) AS student_email
      FROM submissions s
-     JOIN groups      g ON g.id = s.group_id
+     JOIN groups g ON g.id = s.group_id
      JOIN assignments a ON a.id = s.assignment_id
-     WHERE s.assignment_id = $1
-     ORDER BY s.confirmed_at ASC NULLS LAST`,
+     WHERE s.assignment_id = $1`,
     [assignmentId]
   );
 
-  return result.rows.map((row) => ({
+  let submissions = result.rows.map((row) => ({
     id: row.id,
-    status: row.grade_published ? 'graded' : row.status === 'submitted' ? 'ungraded' : row.status,
+    status: deriveReviewState(row),
+    workflowStatus: row.status,
     evaluationStatus: row.evaluation_status,
-    studentName: row.student_name || 'Unknown',
+    studentName: row.student_name || row.group_name || 'Unknown group',
     studentEmail: row.student_email || '',
     groupName: row.group_name,
-    assignmentTitle: row.assignment_title,
-    totalScore: row.graded_score !== null ? Number(row.graded_score) : null,
-    totalMarks: row.total_marks !== null ? Number(row.total_marks) : null,
+    totalScore: toNumber(row.graded_score),
+    totalMarks: toNumber(row.total_marks),
     submitted_at: row.submitted_at,
-    isLate: row.is_late || false,
-    regradeRequested: row.regrade_requested || false,
-    feedback: row.feedback || '',
+    isLate: Boolean(row.is_late),
+    feedback: row.grade_feedback || '',
+    gradePublished: Boolean(row.grade_published),
+    publishedAt: row.published_at,
+    memberCount: Number(row.member_count || 0),
+    submittedMembers: Number(row.submitted_members || 0),
   }));
+
+  if (status === 'ungraded') {
+    submissions = submissions.filter((submission) => submission.status === 'ungraded');
+  } else if (status === 'graded' || status === 'published') {
+    submissions = submissions.filter((submission) => submission.status === 'published');
+  } else if (status === 'draft') {
+    submissions = submissions.filter((submission) => submission.status === 'draft');
+  } else if (status === 'late') {
+    submissions = submissions.filter((submission) => submission.isLate);
+  }
+
+  if (sort === 'oldest') {
+    submissions.sort(
+      (a, b) => new Date(a.submitted_at || 0).getTime() - new Date(b.submitted_at || 0).getTime()
+    );
+  } else if (sort === 'name') {
+    submissions.sort((a, b) => a.studentName.localeCompare(b.studentName));
+  } else {
+    submissions.sort(
+      (a, b) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime()
+    );
+  }
+
+  return submissions;
 }
 
-/**
- * Get count of submissions that are submitted and still ungraded.
- * The quick-grade detail payload is disabled for now because grading is out of scope
- * for the current Phase 1 flow hardening work.
- */
 async function getPendingReviewCount() {
-  const countResult = await query(`
-    SELECT COUNT(*) AS count
-    FROM submissions
-    WHERE status = 'submitted'
-      AND evaluation_status = 'ungraded'
-  `);
+  const countResult = await query(
+    `SELECT COUNT(*) AS count
+     FROM submissions
+     WHERE status = 'submitted'
+       AND graded_score IS NULL`
+  );
 
-  const count = parseInt(countResult.rows[0].count, 10);
+  const oldestResult = await query(
+    `SELECT
+       s.id,
+       s.assignment_id,
+       s.confirmed_at AS submitted_at,
+       a.title AS assignment_title,
+       (SELECT u.full_name
+        FROM group_members gm2
+        JOIN users u ON u.id = gm2.user_id
+        WHERE gm2.group_id = s.group_id
+        ORDER BY CASE WHEN gm2.role = 'leader' THEN 0 ELSE 1 END, gm2.joined_at ASC
+        LIMIT 1) AS student_name
+     FROM submissions s
+     JOIN assignments a ON a.id = s.assignment_id
+     WHERE s.status = 'submitted'
+       AND s.graded_score IS NULL
+     ORDER BY s.confirmed_at ASC NULLS LAST, s.id ASC
+     LIMIT 1`
+  );
+
+  const oldest = oldestResult.rows[0];
 
   return {
-    count,
-    oldestSubmission: null,
+    count: parseInt(countResult.rows[0].count, 10),
+    oldestSubmission: oldest
+      ? {
+          id: oldest.id,
+          assignmentId: oldest.assignment_id,
+          assignmentTitle: oldest.assignment_title,
+          studentName: oldest.student_name || 'Unknown group',
+          submitted_at: oldest.submitted_at,
+          link: `/admin/assignments/${oldest.assignment_id}/submissions/${oldest.id}`,
+        }
+      : null,
   };
 }
 
 // ── Admin: grading ────────────────────────────────────────────────────────────
 
-/**
- * Save a draft grade (score per question + overall feedback).
- * Does NOT publish — student cannot see it yet.
- *
- * Requires columns: graded_score, total_marks, grade_data (JSONB), grade_feedback on submissions.
- * Falls back gracefully if those columns don't exist yet (404 won't crash the app).
- */
-async function saveGrade(submissionId, { scores, totalScore, feedback }) {
+async function saveGrade(
+  submissionId,
+  { scores = [], totalScore, totalMarks, feedback, gradedBy }
+) {
   const check = await query(
-    'SELECT id, status FROM submissions WHERE id = $1',
+    'SELECT id, status, grade_published, total_marks FROM submissions WHERE id = $1',
     [submissionId]
   );
   if (check.rows.length === 0) throw new NotFoundError('Submission not found');
@@ -315,32 +443,54 @@ async function saveGrade(submissionId, { scores, totalScore, feedback }) {
     throw new BadRequestError('Can only grade submitted submissions');
   }
 
+  const resolvedTotalMarks = Number(totalMarks || check.rows[0].total_marks || 100);
+  const resolvedTotalScore = Number(totalScore);
+
+  if (!Number.isFinite(resolvedTotalMarks) || resolvedTotalMarks <= 0) {
+    throw new BadRequestError('Total marks must be greater than zero');
+  }
+  if (!Number.isFinite(resolvedTotalScore) || resolvedTotalScore < 0) {
+    throw new BadRequestError('Total score must be zero or greater');
+  }
+  if (resolvedTotalScore > resolvedTotalMarks) {
+    throw new BadRequestError('Total score cannot exceed total marks');
+  }
+
   await query(
     `UPDATE submissions
-     SET graded_score   = $1,
-         grade_data     = $2,
-         grade_feedback = $3,
-         graded_at      = NOW()
-     WHERE id = $4`,
+     SET graded_score = $1,
+         total_marks = $2,
+         grade_data = $3,
+         grade_feedback = $4,
+         graded_at = NOW(),
+         graded_by = $5
+     WHERE id = $6`,
     [
-      totalScore ?? null,
-      scores ? JSON.stringify(scores) : null,
+      resolvedTotalScore,
+      resolvedTotalMarks,
+      Array.isArray(scores) ? JSON.stringify(scores) : null,
       feedback || null,
+      gradedBy || null,
       submissionId,
     ]
   );
 
-  return { success: true, message: 'Draft grade saved' };
+  return {
+    success: true,
+    message: 'Draft grade saved',
+    totalScore: resolvedTotalScore,
+    totalMarks: resolvedTotalMarks,
+  };
 }
 
-/**
- * Publish the saved grade — makes it visible to the student.
- */
-async function publishGrade(submissionId) {
+async function publishGrade(submissionId, { publishedBy, publishedAt } = {}) {
   const check = await query(
-    'SELECT id, graded_score, status FROM submissions WHERE id = $1',
+    `SELECT id, graded_score, status, evaluation_status
+     FROM submissions
+     WHERE id = $1`,
     [submissionId]
   );
+
   if (check.rows.length === 0) throw new NotFoundError('Submission not found');
   if (check.rows[0].status !== 'submitted') {
     throw new BadRequestError('Can only publish grades for submitted submissions');
@@ -351,39 +501,48 @@ async function publishGrade(submissionId) {
 
   await query(
     `UPDATE submissions
-     SET grade_published = TRUE, published_at = NOW()
+     SET grade_published = TRUE,
+         published_at = COALESCE($2, NOW()),
+         published_by = $3,
+         evaluation_status = CASE
+           WHEN evaluation_status = 'ungraded' THEN 'accepted'
+           ELSE evaluation_status
+         END
      WHERE id = $1`,
-    [submissionId]
+    [submissionId, publishedAt || null, publishedBy || null]
   );
 
-  return { success: true, message: 'Grade published to student' };
+  return { success: true, message: 'Grade published to students' };
 }
 
-/**
- * Bulk-publish grades for multiple submissions at once.
- */
-async function bulkPublishGrades(submissionIds) {
+async function bulkPublishGrades(submissionIds, { publishedBy, publishedAt } = {}) {
   if (!submissionIds.length) return { count: 0, success: true };
 
-  const placeholders = submissionIds.map((_, i) => `$${i + 1}`).join(',');
-
+  const placeholders = submissionIds.map((_, index) => `$${index + 3}`).join(',');
   const result = await query(
     `UPDATE submissions
-     SET grade_published = TRUE, published_at = NOW()
+     SET grade_published = TRUE,
+         published_at = COALESCE($1, NOW()),
+         published_by = $2,
+         evaluation_status = CASE
+           WHEN evaluation_status = 'ungraded' THEN 'accepted'
+           ELSE evaluation_status
+         END
      WHERE id IN (${placeholders})
        AND status = 'submitted'
        AND graded_score IS NOT NULL
      RETURNING id`,
-    submissionIds
+    [publishedAt || null, publishedBy || null, ...submissionIds]
   );
 
   return { count: result.rowCount, success: true };
 }
 
-/**
- * Accept / reject a group submission or an individual member (admin).
- */
 async function reviewSubmission(submissionId, { evaluationStatus, feedback, userId }) {
+  if (!['accepted', 'rejected'].includes(evaluationStatus)) {
+    throw new BadRequestError('Review status must be accepted or rejected');
+  }
+
   const check = await query(
     'SELECT status, group_id FROM submissions WHERE id = $1',
     [submissionId]
@@ -398,29 +557,44 @@ async function reviewSubmission(submissionId, { evaluationStatus, feedback, user
       `UPDATE group_members
        SET evaluation_status = $1, feedback = $2
        WHERE group_id = $3 AND user_id = $4`,
-      [evaluationStatus, feedback, check.rows[0].group_id, userId]
+      [evaluationStatus, feedback || '', check.rows[0].group_id, userId]
     );
-    return { message: `Individual submission ${evaluationStatus}`, evaluationStatus };
-  } else {
-    await query(
-      `UPDATE submissions
-       SET evaluation_status = $1, feedback = $2
-       WHERE id = $3`,
-      [evaluationStatus, feedback, submissionId]
-    );
-    return { message: `Group submission ${evaluationStatus}`, evaluationStatus };
+
+    return {
+      message:
+        evaluationStatus === 'accepted'
+          ? 'Student marked accepted'
+          : 'Student marked for changes',
+      evaluationStatus,
+    };
   }
+
+  await query(
+    `UPDATE submissions
+     SET evaluation_status = $1, feedback = $2
+     WHERE id = $3`,
+    [evaluationStatus, feedback || '', submissionId]
+  );
+
+  return {
+    message:
+      evaluationStatus === 'accepted'
+        ? 'Group submission accepted'
+        : 'Group submission marked for changes',
+    evaluationStatus,
+  };
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 async function getSubmissionWithAuth(submissionId, userId) {
   const result = await query(
-    `SELECT s.*,
-            gm.id                   AS gm_id,
-            gm.submission_status    AS my_submission_status,
-            gm.confirmation_token   AS my_confirmation_token,
-            gm.token_expires_at     AS my_token_expires_at
+    `SELECT
+       s.*,
+       gm.id AS gm_id,
+       gm.submission_status AS my_submission_status,
+       gm.confirmation_token AS my_confirmation_token,
+       gm.token_expires_at AS my_token_expires_at
      FROM submissions s
      JOIN group_members gm ON gm.group_id = s.group_id
      WHERE s.id = $1 AND gm.user_id = $2`,
@@ -441,8 +615,10 @@ module.exports = {
   getSubmission,
   getSubmissionByAssignmentAndUser,
   getAllSubmissionsForAssignment,
+  getSubmissionsByAssignment: getAllSubmissionsForAssignment,
   getPendingReviewCount,
   saveGrade,
+  saveGradeDraft: saveGrade,
   publishGrade,
   bulkPublishGrades,
   reviewSubmission,

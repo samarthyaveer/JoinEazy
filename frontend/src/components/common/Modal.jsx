@@ -68,8 +68,8 @@ export default function Modal({
       ref={overlayRef}
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 sm:p-6"
       style={{
-        background: "rgba(0, 0, 0, 0.2)",
-        backdropFilter: "blur(6px)",
+        background: "rgb(2 6 23 / 0.34)",
+        backdropFilter: "blur(10px)",
         overscrollBehavior: "contain",
       }}
       onClick={handleOverlayClick}
@@ -78,11 +78,11 @@ export default function Modal({
         ref={modalRef}
         className={`w-full ${sizeClasses[size]} rounded-[28px] shadow-modal overflow-hidden max-h-[calc(100vh-1.5rem)] sm:max-h-[min(88vh,820px)]`}
         style={{
-          background: "#FFFFFF",
-          border: "1px solid rgba(0, 0, 0, 0.06)",
+          background: "rgb(var(--color-surface-raised) / 0.96)",
+          border: "1px solid rgb(var(--color-border) / 0.12)",
+          boxShadow: "var(--shadow-modal)",
         }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-border">
           <h3 className="text-section text-text-primary">{title}</h3>
           <button

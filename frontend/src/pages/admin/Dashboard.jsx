@@ -155,7 +155,7 @@ export default function AdminDashboard() {
   return (
     <PageShell
       title="Overview"
-      subtitle="Assignments, grading, progress"
+      subtitle="Assignments, reviews, and progress at a glance."
       action={
         <Link
           to="/admin/assignments/new"
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
       }
     >
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 animate-pulse">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="card h-28 bg-surface-overlay" />
           ))}
@@ -176,8 +176,7 @@ export default function AdminDashboard() {
         <ErrorBanner message={error} onRetry={loadDashboard} />
       ) : (
         <div className="space-y-8">
-          {/* ── Metrics ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {metricCards.map((c) => (
               <MetricCard
                 key={c.label}
@@ -208,7 +207,6 @@ export default function AdminDashboard() {
             />
           </div>
 
-          {/* ── Quick grade card ── */}
           <QuickGradeCard
             pendingCount={pendingCount}
             oldestSubmission={quickGrade}
@@ -219,7 +217,6 @@ export default function AdminDashboard() {
             }
           />
 
-          {/* ── Recent assignments ── */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-section text-text-primary">
@@ -325,7 +322,6 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* ── Activity feed ── */}
           <ActivityFeed
             items={activity}
             isLoading={activityLoading}

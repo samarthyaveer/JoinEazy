@@ -69,7 +69,7 @@ export default function MyGroups() {
   return (
     <PageShell
       title="My groups"
-      subtitle="A clean view of every team, member count, and submission status."
+      subtitle="A compact view of every team, member count, and submission status."
     >
       {groups.length === 0 ? (
         <EmptyState
@@ -83,12 +83,12 @@ export default function MyGroups() {
           }
         />
       ) : (
-        <div ref={cardsRef} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div ref={cardsRef} className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5">
           {groups.map((group) => (
             <article
               key={group.id}
               data-group-card
-              className="card p-5 sm:p-6"
+              className="card p-4 sm:p-5 lg:p-6"
             >
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -116,8 +116,8 @@ export default function MyGroups() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="rounded-[22px] border border-black/6 bg-surface-overlay/65 p-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="rounded-[22px] border border-border bg-surface-overlay/65 p-4">
                     <p className="text-label uppercase tracking-widest text-text-tertiary">
                       Team size
                     </p>
@@ -129,7 +129,7 @@ export default function MyGroups() {
                     </p>
                   </div>
 
-                  <div className="rounded-[22px] border border-black/6 bg-surface-overlay/65 p-4">
+                  <div className="rounded-[22px] border border-border bg-surface-overlay/65 p-4">
                     <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                       <CalendarClock size={14} aria-hidden="true" />
                       Due
@@ -142,7 +142,7 @@ export default function MyGroups() {
                     </p>
                   </div>
 
-                  <div className="rounded-[22px] border border-black/6 bg-surface-overlay/65 p-4">
+                  <div className="rounded-[22px] border border-border bg-surface-overlay/65 p-4 col-span-2 lg:col-span-1">
                     <p className="text-label uppercase tracking-widest text-text-tertiary">
                       Your role
                     </p>
@@ -155,7 +155,7 @@ export default function MyGroups() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-black/6 bg-white/80 p-4 sm:p-5">
+                <div className="rounded-[24px] border border-border bg-surface-raised/80 p-4 sm:p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-meta font-semibold text-text-primary">

@@ -9,6 +9,7 @@ const assignmentRoutes = require('./routes/assignment.routes');
 const groupRoutes = require('./routes/group.routes');
 const submissionRoutes = require('./routes/submission.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const professorRoutes = require('./routes/professor.routes');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/professor', professorRoutes);
 
 // ---------------------
 // 404 handler

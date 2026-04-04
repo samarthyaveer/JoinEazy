@@ -1,122 +1,105 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
 import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
-import Keyboard from "lucide-react/dist/esm/icons/keyboard";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
+import Users from "lucide-react/dist/esm/icons/users";
+import Clock3 from "lucide-react/dist/esm/icons/clock-3";
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
 import PageShell from "@/components/layout/PageShell";
 import ErrorBanner from "@/components/common/ErrorBanner";
 import EmptyState from "@/components/common/EmptyState";
 import Modal from "@/components/common/Modal";
-import InlineGradingPanel from "@/components/admin/InlineGradingPanel";
 import FeedbackComposer from "@/components/admin/FeedbackComposer";
 import { getSubmissionDetail, publishGrade, saveGrade } from "@/services/api";
-import useDraftGrade from "@/hooks/useDraftGrade";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
 import { timeAgo } from "@/utils/time";
 
-// ─── Keyboard hint tooltip ────────────────────────────────────────────────────
-function KeyboardHint() {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setVisible((v) => !v)}
-        className="w-8 h-8 flex items-center justify-center rounded-xl text-text-tertiary hover:text-text-primary hover:bg-surface-overlay transition-colors"
-        aria-label="Keyboard shortcuts"
-      >
-        <Keyboard size={15} aria-hidden="true" />
-      </button>
-      {visible && (
-        <div className="absolute right-0 top-10 z-50 w-56 card p-4 shadow-xl text-label space-y-2">
-          <p className="text-text-tertiary uppercase tracking-widest text-[10px] font-medium mb-3">
-            Shortcuts
-          </p>
-          {[
-            ["Ctrl + S", "Save draft"],
-            ["Ctrl + Enter", "Publish score"],
-            ["← / →", "Prev / Next student"],
-          ].map(([key, desc]) => (
-            <div key={key} className="flex items-center justify-between gap-4">
-              <span className="font-mono bg-surface-overlay px-2 py-0.5 rounded text-text-secondary text-[11px]">
-                {key}
-              </span>
-              <span className="text-text-secondary">{desc}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+const dateTimeFmt = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function StatusBadge({ submission }) {
+  const tone =
+    submission.reviewState === "published"
+      ? "badge-success"
+      : submission.reviewState === "draft"
+        ? "badge-warning"
+        : "badge-neutral";
+
+  const label =
+    submission.reviewState === "published"
+      ? "Published"
+      : submission.reviewState === "draft"
+        ? "Draft saved"
+        : "Needs grading";
+
+  return <span className={`badge ${tone}`}>{label}</span>;
 }
 
-// ─── Grade badge ──────────────────────────────────────────────────────────────
-function GradeBadge({ letter }) {
-  const colours = {
-    A: "bg-semantic-success/10 text-semantic-success border-semantic-success/20",
-    B: "bg-blue-50 text-blue-600 border-blue-200",
-    C: "bg-amber-50 text-amber-600 border-amber-200",
-    D: "bg-orange-50 text-orange-600 border-orange-200",
-    F: "bg-semantic-danger/10 text-semantic-danger border-semantic-danger/20",
-  };
+function MemberStatus({ member }) {
+  const tone =
+    member.submission_status === "submitted"
+      ? "text-semantic-success"
+      : member.submission_status === "pending"
+        ? "text-text-tertiary"
+        : "text-semantic-warning";
+
   return (
-    <span
-      className={`inline-flex items-center justify-center w-10 h-10 rounded-xl border text-body font-bold ${colours[letter] || colours.C}`}
-    >
-      {letter}
+    <span className={`text-label font-medium capitalize ${tone}`}>
+      {member.submission_status?.replace(/_/g, " ")}
     </span>
   );
 }
 
-// ─── Auto-save status indicator ───────────────────────────────────────────────
-function SaveStatus({ isDirty, isSaving, lastSaved }) {
-  if (isSaving) {
-    return (
-      <span className="text-label text-text-tertiary animate-pulse">
-        Saving…
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-border last:border-b-0">
+      <span className="text-label uppercase tracking-widest text-text-tertiary">
+        {label}
       </span>
-    );
-  }
-  if (isDirty) {
-    return (
-      <span className="text-label text-semantic-warning">Unsaved changes</span>
-    );
-  }
-  if (lastSaved) {
-    return (
-      <span className="text-label text-semantic-success">
-        Saved {timeAgo(lastSaved)}
-      </span>
-    );
-  }
-  return null;
+      <span className="text-meta text-right text-text-primary">{value}</span>
+    </div>
+  );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
 export default function SubmissionDetail() {
   const { assignmentId, submissionId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [submission, setSubmission] = useState(null);
+  const [totalMarks, setTotalMarks] = useState("100");
+  const [totalScore, setTotalScore] = useState("0");
+  const [feedback, setFeedback] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState("");
   const [showPublish, setShowPublish] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
 
-  // ── Fetch submission ────────────────────────────────────────────────────────
   const fetchDetail = useCallback(async () => {
     if (!submissionId) {
       setIsLoading(false);
       return;
     }
+
     try {
       setIsLoading(true);
       setError(null);
       const { data } = await getSubmissionDetail(submissionId);
-      setSubmission(data.submission);
+      const nextSubmission = data.submission;
+      setSubmission(nextSubmission);
+      setTotalMarks(String(nextSubmission.totalMarks ?? 100));
+      setTotalScore(String(nextSubmission.totalScore ?? 0));
+      setFeedback(nextSubmission.feedback || "");
+      setLastSavedAt(nextSubmission.gradedAt || null);
     } catch (err) {
       setError(err.message || "Couldn't load submission.");
     } finally {
@@ -128,43 +111,12 @@ export default function SubmissionDetail() {
     fetchDetail();
   }, [fetchDetail]);
 
-  // ── Draft grades ────────────────────────────────────────────────────────────
-  const initialScores = useMemo(() => {
-    if (!submission?.questions) return [];
-    return submission.questions.map((q) => ({
-      questionId: q.id,
-      score: q.autoScore ?? 0,
-      comment: "",
-    }));
-  }, [submission]);
-
-  const {
-    scores,
-    setScores,
-    feedback,
-    setFeedback,
-    isDirty,
-    lastSaved,
-    markSaved,
-    clearDraft,
-  } = useDraftGrade(submissionId, initialScores, submission?.feedback || "");
-
-  // ── Score calculations ──────────────────────────────────────────────────────
-  const questionList = submission?.questions || [];
-  const totalMarks =
-    submission?.totalMarks ||
-    questionList.reduce((acc, q) => acc + q.maxMarks, 0);
-  const totalScore = scores.reduce((acc, s) => acc + (s.score || 0), 0);
-  const percent = percentFromScore(totalScore, totalMarks);
-  const gradeLetter = gradeLetterFromPercent(percent);
-
-  // ── Navigation list ─────────────────────────────────────────────────────────
-  // Normalise to strings so indexOf comparison works regardless of API type
   const submissionIds = useMemo(() => {
     const fromState = location.state?.submissionIds;
     if (Array.isArray(fromState) && fromState.length > 0) {
       return fromState.map(String);
     }
+
     try {
       const raw = sessionStorage.getItem(`submission_list_${assignmentId}`);
       return raw ? JSON.parse(raw).map(String) : [];
@@ -180,459 +132,585 @@ export default function SubmissionDetail() {
       ? submissionIds[currentIndex + 1]
       : null;
 
-  // ── Save grade ──────────────────────────────────────────────────────────────
+  const parsedTotalMarks = Number(totalMarks);
+  const parsedTotalScore = Number(totalScore);
+  const percent = percentFromScore(
+    Number.isFinite(parsedTotalScore) ? parsedTotalScore : 0,
+    Number.isFinite(parsedTotalMarks) && parsedTotalMarks > 0
+      ? parsedTotalMarks
+      : 100,
+  );
+  const gradeLetter = gradeLetterFromPercent(percent);
+
+  const isDirty =
+    submission &&
+    (String(submission.totalMarks ?? 100) !== totalMarks ||
+      String(submission.totalScore ?? 0) !== totalScore ||
+      (submission.feedback || "") !== feedback);
+
+  const validateGrade = useCallback(() => {
+    if (!Number.isFinite(parsedTotalMarks) || parsedTotalMarks <= 0) {
+      setNotice("Total marks must be greater than zero.");
+      return false;
+    }
+
+    if (!Number.isFinite(parsedTotalScore) || parsedTotalScore < 0) {
+      setNotice("Score must be zero or greater.");
+      return false;
+    }
+
+    if (parsedTotalScore > parsedTotalMarks) {
+      setNotice("Score cannot exceed total marks.");
+      return false;
+    }
+
+    return true;
+  }, [parsedTotalMarks, parsedTotalScore]);
+
   const handleSaveGrade = useCallback(async () => {
-    if (!submissionId) return;
-    setIsSaving(true);
-    setNotice("");
+    if (!submissionId || !validateGrade()) return;
+
     try {
+      setIsSaving(true);
+      setNotice("");
+
       await saveGrade(submissionId, {
-        scores: scores.map((s) => ({
-          questionId: s.questionId,
-          score: s.score,
-          comment: s.comment,
-        })),
-        totalScore,
+        scores: [],
+        totalScore: parsedTotalScore,
+        totalMarks: parsedTotalMarks,
         feedback,
       });
-      markSaved();
-      setNotice("Draft saved");
-      setTimeout(() => setNotice(""), 2500);
+
+      const gradedAt = new Date().toISOString();
+      setLastSavedAt(gradedAt);
+      setSubmission((current) =>
+        current
+          ? {
+              ...current,
+              totalScore: parsedTotalScore,
+              totalMarks: parsedTotalMarks,
+              feedback,
+              reviewState: current.gradePublished ? "published" : "draft",
+              gradedAt,
+            }
+          : current,
+      );
+      setNotice("Draft saved.");
     } catch (err) {
       setNotice(err.message || "Couldn't save grade.");
     } finally {
       setIsSaving(false);
     }
-  }, [submissionId, scores, totalScore, feedback, markSaved]);
+  }, [
+    feedback,
+    parsedTotalMarks,
+    parsedTotalScore,
+    submissionId,
+    validateGrade,
+  ]);
 
-  // ── Auto-save: 3 s after last change ────────────────────────────────────────
-  const saveRef = useRef(null);
-  saveRef.current = handleSaveGrade;
-
-  useEffect(() => {
-    if (!isDirty) return;
-    const timer = setTimeout(() => saveRef.current?.(), 3000);
-    return () => clearTimeout(timer);
-  }, [scores, feedback, isDirty]);
-
-  // ── Publish grade ───────────────────────────────────────────────────────────
   const handlePublish = useCallback(async () => {
-    setIsPublishing(true);
+    if (!submissionId || !validateGrade()) return;
+
     try {
+      setIsPublishing(true);
+      setNotice("");
+
       await saveGrade(submissionId, {
-        scores: scores.map((s) => ({
-          questionId: s.questionId,
-          score: s.score,
-          comment: s.comment,
-        })),
-        totalScore,
+        scores: [],
+        totalScore: parsedTotalScore,
+        totalMarks: parsedTotalMarks,
         feedback,
       });
       await publishGrade(submissionId);
-      clearDraft();
-      markSaved();
+
+      const publishedAt = new Date().toISOString();
+      setSubmission((current) =>
+        current
+          ? {
+              ...current,
+              totalScore: parsedTotalScore,
+              totalMarks: parsedTotalMarks,
+              feedback,
+              gradePublished: true,
+              reviewState: "published",
+              publishedAt,
+            }
+          : current,
+      );
 
       sessionStorage.setItem(
         "submission_published",
-        JSON.stringify({ id: String(submissionId), totalScore })
+        JSON.stringify({
+          id: Number(submissionId),
+          totalScore: parsedTotalScore,
+        }),
       );
 
       setShowPublish(false);
+      setNotice("Grade published.");
 
-      // Auto-advance to next submission if one exists
       if (nextId) {
-        navigate(
-          `/admin/assignments/${assignmentId}/submissions/${nextId}`,
-          { replace: true, state: { submissionIds } }
-        );
-      } else {
-        navigate(`/admin/assignments/${assignmentId}/submissions`);
+        navigate(`/admin/assignments/${assignmentId}/submissions/${nextId}`, {
+          replace: true,
+          state: { submissionIds },
+        });
       }
     } catch (err) {
       setNotice(err.message || "Couldn't publish grade.");
-      setIsPublishing(false);
       setShowPublish(false);
+    } finally {
+      setIsPublishing(false);
     }
   }, [
-    submissionId,
-    scores,
-    totalScore,
-    feedback,
-    markSaved,
-    clearDraft,
-    nextId,
-    navigate,
     assignmentId,
+    feedback,
+    navigate,
+    nextId,
+    parsedTotalMarks,
+    parsedTotalScore,
+    submissionId,
+    submissionIds,
+    validateGrade,
+  ]);
+
+  useEffect(() => {
+    const handler = (event) => {
+      const tag = document.activeElement?.tagName;
+      const inField = tag === "INPUT" || tag === "TEXTAREA";
+
+      if (event.ctrlKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        handleSaveGrade();
+      }
+
+      if (!inField && event.key === "ArrowLeft" && prevId) {
+        navigate(`/admin/assignments/${assignmentId}/submissions/${prevId}`, {
+          state: { submissionIds },
+        });
+      }
+
+      if (!inField && event.key === "ArrowRight" && nextId) {
+        navigate(`/admin/assignments/${assignmentId}/submissions/${nextId}`, {
+          state: { submissionIds },
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [
+    assignmentId,
+    handleSaveGrade,
+    navigate,
+    nextId,
+    prevId,
     submissionIds,
   ]);
 
-  // ── Keyboard shortcuts ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e) => {
-      const tag = document.activeElement?.tagName;
-      const inField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-
-      if (e.ctrlKey && e.key === "s") {
-        e.preventDefault();
-        saveRef.current?.();
-        return;
-      }
-      if (e.ctrlKey && e.key === "Enter") {
-        e.preventDefault();
-        setShowPublish(true);
-        return;
-      }
-      // Arrow navigation only when not typing
-      if (!inField) {
-        if (e.key === "ArrowLeft" && prevId) {
-          navigate(`/admin/assignments/${assignmentId}/submissions/${prevId}`, {
-            state: { submissionIds },
-          });
-        } else if (e.key === "ArrowRight" && nextId) {
-          navigate(`/admin/assignments/${assignmentId}/submissions/${nextId}`, {
-            state: { submissionIds },
-          });
-        }
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [prevId, nextId, navigate, assignmentId, submissionIds]);
-
-  // ── Score update helper ─────────────────────────────────────────────────────
-  const updateScore = (questionId, changes) => {
-    setScores((prev) => {
-      const next = prev.map((entry) =>
-        entry.questionId === questionId ? { ...entry, ...changes } : entry
-      );
-      if (!next.find((entry) => entry.questionId === questionId)) {
-        next.push({ questionId, score: 0, comment: "", ...changes });
-      }
-      return next;
-    });
-  };
-
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <PageShell
-      title="Submission details"
-      subtitle={submission?.assignmentTitle || "Review and score"}
+      title="Review submission"
+      subtitle={submission?.assignmentTitle || "Grade and publish this group submission"}
       action={
-        <div className="flex items-center gap-2">
-          <KeyboardHint />
-          <button
-            onClick={() => navigate(-1)}
-            className="btn-secondary btn-sm"
-          >
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button onClick={() => navigate(-1)} className="btn-secondary btn-sm">
             <ArrowLeft size={14} aria-hidden="true" />
-            Go back
+            Back
           </button>
           <button
             onClick={() =>
               prevId &&
-              navigate(
-                `/admin/assignments/${assignmentId}/submissions/${prevId}`,
-                { state: { submissionIds } }
-              )
+              navigate(`/admin/assignments/${assignmentId}/submissions/${prevId}`, {
+                state: { submissionIds },
+              })
             }
             className="btn-secondary btn-sm"
             disabled={!prevId}
-            title="Previous student (←)"
           >
             Previous
           </button>
           <button
             onClick={() =>
               nextId &&
-              navigate(
-                `/admin/assignments/${assignmentId}/submissions/${nextId}`,
-                { state: { submissionIds } }
-              )
+              navigate(`/admin/assignments/${assignmentId}/submissions/${nextId}`, {
+                state: { submissionIds },
+              })
             }
             className="btn-secondary btn-sm"
             disabled={!nextId}
-            title="Next student (→)"
           >
-            Next one
+            Next
             <ArrowRight size={14} aria-hidden="true" />
           </button>
-          {currentIndex >= 0 && submissionIds.length > 0 && (
-            <span className="text-label text-text-tertiary font-mono tabular-nums hidden sm:inline">
-              {currentIndex + 1} / {submissionIds.length}
-            </span>
-          )}
         </div>
       }
     >
       {isLoading ? (
         <div className="card p-6 animate-pulse">
-          <div className="h-4 w-32 bg-surface-overlay rounded mb-4" />
-          <div className="h-24 bg-surface-overlay rounded" />
+          <div className="h-4 w-40 bg-surface-overlay rounded mb-4" />
+          <div className="h-28 bg-surface-overlay rounded" />
         </div>
       ) : error ? (
         <ErrorBanner message={error} onRetry={fetchDetail} />
       ) : !submission ? (
         <EmptyState
           title="Submission missing"
-          description="This submission isn't available."
+          description="This submission is no longer available."
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
-          {/* ── Left: student answers ── */}
-          <div className="space-y-6">
-            {/* Student info */}
-            <div className="card p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-accent/10 text-accent flex items-center justify-center text-meta font-semibold select-none">
-                    {submission.student.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] gap-6">
+            <div className="space-y-6">
+              <div className="card p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-body font-medium text-text-primary">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge submission={submission} />
+                      {submission.isLate ? (
+                        <span className="badge badge-warning">Late work</span>
+                      ) : null}
+                      <span className="badge badge-neutral">
+                        {submission.submittedMembers}/{submission.memberCount} members submitted
+                      </span>
+                    </div>
+                    <h2 className="mt-4 text-2xl font-semibold text-text-primary">
+                      {submission.groupName}
+                    </h2>
+                    <p className="mt-2 text-meta text-text-secondary">
+                      Reviewed under {submission.assignmentTitle}
+                    </p>
+                  </div>
+
+                  <a
+                    href={submission.onedriveLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-secondary btn-sm w-full sm:w-auto"
+                  >
+                    Open submission folder
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="card p-4 bg-surface-overlay/50 border-border/70 shadow-none">
+                    <p className="text-label uppercase tracking-widest text-text-tertiary">
+                      Group lead
+                    </p>
+                    <p className="mt-2 text-body font-medium text-text-primary">
                       {submission.student.name}
                     </p>
-                    <p className="text-label text-text-tertiary">
-                      {submission.student.email}
+                    <p className="mt-1 text-label text-text-tertiary">
+                      {submission.student.email || "No email available"}
                     </p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-label text-text-tertiary">
-                    Submitted {timeAgo(submission.submitted_at)}
-                  </p>
-                  {submission.isLate && (
-                    <span className="badge badge-warning mt-2">Late work</span>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* Regrade request banner */}
-            {submission.regradeRequested && (
-              <div className="card p-4 border border-purple-200 bg-purple-50">
-                <p className="text-meta font-medium text-purple-800">
-                  Regrade requested
-                </p>
-                <p className="text-label text-purple-700 mt-2">
-                  {submission.regradeReason || "No reason provided."}
-                </p>
-              </div>
-            )}
-
-            {/* Questions */}
-            {questionList.map((q, idx) => {
-              const scoreEntry = scores.find((s) => s.questionId === q.id);
-              const awarded = scoreEntry?.score ?? q.autoScore ?? 0;
-              const isAdjusted = awarded !== (q.autoScore ?? 0);
-
-              return (
-                <div key={q.id} className="card p-5">
-                  <div className="flex items-start justify-between mb-3 gap-3">
-                    <h3 className="text-section text-text-primary">
-                      Q{idx + 1}. {q.text}
-                    </h3>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {isAdjusted && (
-                        <span className="badge badge-warning text-[10px]">
-                          Adjusted
+                  <div className="card p-4 bg-surface-overlay/50 border-border/70 shadow-none">
+                    <p className="text-label uppercase tracking-widest text-text-tertiary">
+                      Timeline
+                    </p>
+                    <div className="mt-2 space-y-2 text-meta text-text-secondary">
+                      <p>
+                        Due {dateTimeFmt.format(new Date(submission.dueDate))}
+                      </p>
+                      <p>
+                        Submitted{" "}
+                        {submission.submittedAt
+                          ? dateTimeFmt.format(new Date(submission.submittedAt))
+                          : "Not yet"}
+                      </p>
+                      <p>
+                        Current state:{" "}
+                        <span className="font-medium text-text-primary capitalize">
+                          {submission.reviewState.replace(/_/g, " ")}
                         </span>
-                      )}
-                      <span className="badge badge-neutral font-mono tabular-nums">
-                        {awarded} / {q.maxMarks}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div
-                      className={`p-3 rounded-xl border ${
-                        q.isCorrect
-                          ? "border-semantic-success/20 bg-semantic-success/5"
-                          : q.studentAnswer
-                            ? "border-semantic-danger/20 bg-semantic-danger/5"
-                            : "border-border bg-white"
-                      }`}
-                    >
-                      <p className="text-label text-text-tertiary uppercase tracking-widest">
-                        Student response
-                      </p>
-                      <p className="text-body text-text-primary mt-2">
-                        {q.studentAnswer || (
-                          <span className="text-text-tertiary italic">
-                            No answer given
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl border border-semantic-success/20 bg-semantic-success/5">
-                      <p className="text-label text-semantic-success uppercase tracking-widest">
-                        Correct answer
-                      </p>
-                      <p className="text-body text-text-primary mt-2">
-                        {q.correctAnswer}
                       </p>
                     </div>
                   </div>
-
-                  {!q.isCorrect && q.mostCommonWrong && (
-                    <p className="text-label text-text-tertiary mt-3">
-                      Most common wrong answer:{" "}
-                      <span className="font-medium text-text-secondary">
-                        "{q.mostCommonWrong}"
-                      </span>
-                    </p>
-                  )}
                 </div>
-              );
-            })}
-          </div>
 
-          {/* ── Right: grading panel ── */}
-          <div className="space-y-4 lg:sticky lg:top-6 self-start">
-            {/* Score summary */}
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-label text-text-tertiary uppercase tracking-widest">
-                  Score summary
-                </p>
-                <GradeBadge letter={gradeLetter} />
+                {submission.assignmentDescription ? (
+                  <div className="mt-6 rounded-2xl border border-border bg-surface-overlay/45 p-4">
+                    <p className="text-label uppercase tracking-widest text-text-tertiary">
+                      Assignment brief
+                    </p>
+                    <p className="mt-2 text-meta leading-7 text-text-secondary">
+                      {submission.assignmentDescription}
+                    </p>
+                  </div>
+                ) : null}
               </div>
-              <h3 className="text-2xl font-bold text-text-primary tabular-nums">
-                {totalScore}
-                <span className="text-text-tertiary font-normal">
-                  {" "}
-                  / {totalMarks}
-                </span>
-                <span className="text-lg font-medium text-text-secondary ml-2">
-                  ({percent}%)
-                </span>
-              </h3>
-              {/* Progress bar */}
-              <div className="mt-3 h-1.5 bg-surface-overlay rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    percent >= 60
-                      ? "bg-semantic-success"
-                      : percent >= 40
-                        ? "bg-semantic-warning"
-                        : "bg-semantic-danger"
-                  }`}
-                  style={{ width: `${Math.min(percent, 100)}%` }}
-                />
+
+              <div className="card p-5 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-accent/10 text-accent flex items-center justify-center">
+                    <Users size={18} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-section text-text-primary">Group roster</h3>
+                    <p className="text-label text-text-tertiary mt-1">
+                      Submission and review status for every member
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {(submission.members || []).map((member) => (
+                    <div
+                      key={member.user_id}
+                      className="rounded-2xl border border-border bg-surface-overlay/35 px-4 py-4"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-body font-medium text-text-primary">
+                            {member.full_name}
+                          </p>
+                          <p className="text-label text-text-tertiary mt-1">
+                            {member.email}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="badge badge-neutral capitalize">
+                            {member.role}
+                          </span>
+                          <span className="badge badge-neutral">
+                            <MemberStatus member={member} />
+                          </span>
+                          {member.evaluation_status !== "ungraded" ? (
+                            <span
+                              className={`badge ${
+                                member.evaluation_status === "accepted"
+                                  ? "badge-success"
+                                  : "badge-danger"
+                              } capitalize`}
+                            >
+                              {member.evaluation_status}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      {member.feedback ? (
+                        <p className="mt-3 text-label text-text-secondary">
+                          {member.feedback}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="mt-2 flex items-center justify-between">
-                <SaveStatus
-                  isDirty={isDirty}
-                  isSaving={isSaving}
-                  lastSaved={lastSaved}
-                />
+
+              <div className="card p-5 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-accent/10 text-accent flex items-center justify-center">
+                    <Clock3 size={18} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-section text-text-primary">Submission activity</h3>
+                    <p className="text-label text-text-tertiary mt-1">
+                      Link open history for this group
+                    </p>
+                  </div>
+                </div>
+
+                {(submission.clickLog || []).length > 0 ? (
+                  <div className="mt-5 space-y-3">
+                    {submission.clickLog.map((event, index) => (
+                      <div
+                        key={`${event.email}-${event.clicked_at}-${index}`}
+                        className="rounded-2xl border border-border bg-surface-overlay/35 px-4 py-4 flex items-start justify-between gap-4"
+                      >
+                        <div>
+                          <p className="text-body font-medium text-text-primary">
+                            {event.full_name}
+                          </p>
+                          <p className="text-label text-text-tertiary mt-1">
+                            {event.email}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-meta text-text-primary">
+                            {timeAgo(event.clicked_at)}
+                          </p>
+                          <p className="text-label text-text-tertiary mt-1">
+                            {dateTimeFmt.format(new Date(event.clicked_at))}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No activity yet"
+                    description="Link opens will appear here once students access the folder."
+                  />
+                )}
               </div>
             </div>
 
-            <InlineGradingPanel
-              questions={questionList}
-              scores={scores}
-              onUpdate={updateScore}
-            />
+            <div className="space-y-4 xl:sticky xl:top-6 self-start">
+              <div className="card p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-label uppercase tracking-widest text-text-tertiary">
+                      Grade summary
+                    </p>
+                    <h3 className="mt-3 text-3xl font-semibold text-text-primary">
+                      {Number.isFinite(parsedTotalScore) ? parsedTotalScore : 0}
+                      <span className="text-text-tertiary font-normal">
+                        {" "}
+                        / {Number.isFinite(parsedTotalMarks) && parsedTotalMarks > 0 ? parsedTotalMarks : 100}
+                      </span>
+                    </h3>
+                    <p className="mt-2 text-meta text-text-secondary">
+                      {percent}% · {gradeLetter}
+                    </p>
+                  </div>
+                  <div className="badge badge-success">{gradeLetter}</div>
+                </div>
 
-            <FeedbackComposer
-              submissionId={submissionId}
-              value={feedback}
-              onChange={setFeedback}
-            />
+                <div className="mt-5 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-label uppercase tracking-widest text-text-tertiary">
+                        Total marks
+                      </span>
+                      <input
+                        id="submission-total-marks"
+                        name="totalMarks"
+                        type="number"
+                        min="1"
+                        value={totalMarks}
+                        onChange={(event) => setTotalMarks(event.target.value)}
+                        className="input-field mt-2"
+                      />
+                    </label>
 
-            {notice && (
-              <p className="text-meta text-text-secondary">{notice}</p>
-            )}
+                    <label className="block">
+                      <span className="text-label uppercase tracking-widest text-text-tertiary">
+                        Awarded score
+                      </span>
+                      <input
+                        id="submission-awarded-score"
+                        name="awardedScore"
+                        type="number"
+                        min="0"
+                        value={totalScore}
+                        onChange={(event) => setTotalScore(event.target.value)}
+                        className="input-field mt-2"
+                      />
+                    </label>
+                  </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleSaveGrade}
-                className="btn-secondary"
-                disabled={isSaving}
-                title="Ctrl + S"
-              >
-                {isSaving ? "Saving…" : "Save draft"}
-              </button>
-              <button
-                onClick={() => setShowPublish(true)}
-                className="btn-primary flex-1"
-                disabled={isPublishing || scores.length === 0}
-                title="Ctrl + Enter"
-              >
-                Publish score
-              </button>
+                  <div className="h-2 rounded-full bg-surface-overlay overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        percent >= 75
+                          ? "bg-semantic-success"
+                          : percent >= 50
+                            ? "bg-semantic-warning"
+                            : "bg-semantic-danger"
+                      }`}
+                      style={{ width: `${Math.min(percent, 100)}%` }}
+                    />
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface-overlay/35 p-4">
+                    <SummaryRow
+                      label="Visibility"
+                      value={submission.gradePublished ? "Published to students" : "Draft only"}
+                    />
+                    <SummaryRow
+                      label="Group review"
+                      value={
+                        submission.evaluationStatus === "ungraded"
+                          ? "Pending"
+                          : submission.evaluationStatus
+                      }
+                    />
+                    <SummaryRow
+                      label="Last saved"
+                      value={lastSavedAt ? timeAgo(lastSavedAt) : "Not saved yet"}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <FeedbackComposer
+                submissionId={submissionId}
+                value={feedback}
+                onChange={setFeedback}
+              />
+
+              {notice ? (
+                <div className="card p-4 border border-border bg-surface-overlay/35">
+                  <div className="flex items-center gap-2 text-text-primary">
+                    <CheckCircle2
+                      size={16}
+                      aria-hidden="true"
+                      className="text-semantic-success"
+                    />
+                    <span className="text-meta">{notice}</span>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleSaveGrade}
+                  className="btn-secondary"
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving draft..." : isDirty ? "Save draft" : "Draft saved"}
+                </button>
+                <button
+                  onClick={() => setShowPublish(true)}
+                  className="btn-primary"
+                  disabled={isPublishing}
+                >
+                  Publish grade
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+
+          <Modal
+            isOpen={showPublish}
+            onClose={() => setShowPublish(false)}
+            title="Publish grade"
+            size="sm"
+          >
+            <p className="text-meta text-text-secondary">
+              Students will see the score, total marks, and written feedback once
+              you publish.
+            </p>
+            <div className="mt-4 rounded-2xl border border-border bg-surface-overlay/45 p-4">
+              <p className="text-body font-medium text-text-primary">
+                {submission.groupName}
+              </p>
+              <p className="mt-1 text-label text-text-tertiary">
+                {parsedTotalScore} / {parsedTotalMarks} · {percent}%
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowPublish(false)}
+                className="btn-secondary btn-sm"
+                disabled={isPublishing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePublish}
+                className="btn-primary btn-sm"
+                disabled={isPublishing}
+              >
+                {isPublishing ? "Publishing..." : "Publish now"}
+              </button>
+            </div>
+          </Modal>
+        </>
       )}
-
-      {/* ── Publish confirmation modal ── */}
-      <Modal
-        isOpen={showPublish}
-        onClose={() => setShowPublish(false)}
-        title="Publish score"
-        size="sm"
-      >
-        <p className="text-meta text-text-secondary">
-          This will make the grade visible to{" "}
-          <span className="font-medium text-text-primary">
-            {submission?.student?.name}
-          </span>
-          .
-        </p>
-        <div className="mt-4 flex items-center gap-4 p-4 rounded-xl bg-surface-overlay">
-          <GradeBadge letter={gradeLetter} />
-          <div>
-            <p className="text-body font-bold text-text-primary tabular-nums">
-              {totalScore} / {totalMarks} ({percent}%)
-            </p>
-            <p className="text-label text-text-tertiary mt-0.5">
-              {gradeLetter} grade
-            </p>
-          </div>
-        </div>
-        {!feedback && (
-          <div className="mt-4 p-3 rounded-xl bg-semantic-warning/10 border border-semantic-warning/20 text-semantic-warning text-label">
-            No feedback written yet. Consider adding a note before publishing.
-          </div>
-        )}
-        {feedback && (
-          <div className="mt-4">
-            <p className="text-label text-text-tertiary uppercase tracking-widest mb-1">
-              Feedback preview
-            </p>
-            <p className="text-meta text-text-secondary line-clamp-3">
-              {feedback}
-            </p>
-          </div>
-        )}
-        {nextId && (
-          <p className="mt-3 text-label text-text-tertiary">
-            You'll be taken to the next student automatically.
-          </p>
-        )}
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={() => setShowPublish(false)}
-            className="btn-secondary btn-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handlePublish}
-            className="btn-primary btn-sm"
-            disabled={isPublishing}
-          >
-            {isPublishing ? "Publishing…" : "Publish score"}
-          </button>
-        </div>
-      </Modal>
     </PageShell>
   );
 }

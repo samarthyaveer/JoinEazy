@@ -33,6 +33,17 @@ async function getById(req, res, next) {
   }
 }
 
+async function getStats(req, res, next) {
+  try {
+    const stats = await assignmentService.getAssignmentStats(
+      parseInt(req.params.id, 10)
+    );
+    res.json(stats);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function update(req, res, next) {
   try {
     const assignment = await assignmentService.updateAssignment(
@@ -55,4 +66,4 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { create, getAll, getById, update, remove };
+module.exports = { create, getAll, getById, getStats, update, remove };

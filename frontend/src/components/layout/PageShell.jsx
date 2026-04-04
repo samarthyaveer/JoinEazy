@@ -2,6 +2,7 @@ import { useState, useRef, useLayoutEffect } from "react";
 import Sidebar from "./Sidebar";
 import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 import Menu from "lucide-react/dist/esm/icons/menu";
+import ThemeToggle from "@/components/common/ThemeToggle";
 
 /**
  * Standard page shell that wraps the application layout.
@@ -97,7 +98,7 @@ export default function PageShell({ title, subtitle, action, children }) {
           width: "560px",
           height: "560px",
           background:
-            "radial-gradient(circle, rgba(0,85,255,0.08) 0%, rgba(0,85,255,0.03) 38%, transparent 72%)",
+            "radial-gradient(circle, rgb(var(--color-accent) / 0.1) 0%, rgb(var(--color-accent) / 0.04) 38%, transparent 72%)",
           top: "-8%",
           right: "-8%",
           zIndex: 0,
@@ -107,12 +108,12 @@ export default function PageShell({ title, subtitle, action, children }) {
         className="pointer-events-none absolute inset-x-0 top-0 h-[320px] z-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0) 100%)",
+            "linear-gradient(180deg, rgb(var(--color-surface-raised) / 0.9) 0%, rgb(var(--color-surface-raised) / 0.45) 40%, transparent 100%)",
         }}
       />
 
       <div className="relative z-10 min-h-screen">
-        <header className="lg:hidden flex items-center justify-between h-16 px-4 sm:px-6 bg-white/80 backdrop-blur-md border-b border-black/6 sticky top-0 z-30">
+        <header className="lg:hidden flex items-center justify-between h-16 px-4 sm:px-6 bg-surface-raised/88 backdrop-blur-xl border-b border-border sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <img
               src="/joineazy.png"
@@ -124,54 +125,44 @@ export default function PageShell({ title, subtitle, action, children }) {
               <span className="text-body font-bold text-text-primary block leading-none">
                 JoinEazy
               </span>
-              <span className="text-label text-text-tertiary">Navigation</span>
+              <span className="text-label text-text-tertiary">Workspace</span>
             </div>
           </div>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 -mr-2 text-text-tertiary hover:text-text-primary hover:bg-surface-overlay rounded-xl transition-colors"
-            aria-label="Open navigation menu"
-          >
-            <Menu size={24} strokeWidth={2} />
-          </button>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle compact />
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-text-secondary hover:bg-surface-overlay hover:text-text-primary transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <Menu size={21} strokeWidth={2} />
+            </button>
+          </div>
         </header>
 
-        <main className="px-4 sm:px-6 lg:px-8 pt-6 pb-28 lg:pt-8 lg:pb-36">
-          <div className="max-w-[92rem] mx-auto w-full">
+        <main className="px-4 sm:px-5 lg:px-8 pt-5 pb-28 lg:pt-8 lg:pb-36">
+          <div className="max-w-[88rem] mx-auto w-full">
             <div
               ref={headerRef}
-              className="flex flex-col gap-5 mb-8 sm:mb-10"
+              className="flex flex-col gap-4 mb-6 sm:mb-8"
             >
-              <div className="hidden lg:flex items-center justify-between gap-4">
-                <div className="inline-flex items-center gap-2 rounded-full border border-black/6 bg-white/80 px-3 py-2 text-label text-text-tertiary backdrop-blur-md">
-                  <span className="w-2 h-2 rounded-full bg-accent" />
-                  Workspace ready
-                </div>
-                <div className="text-label text-text-tertiary">
-                  Smooth mode for desktop and mobile
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-surface-overlay/80 px-3 py-1.5 text-label text-text-tertiary mb-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    Current workspace
-                  </div>
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="max-w-3xl mx-auto">
                   <h1
-                    className="text-2xl sm:text-3xl lg:text-page font-bold text-text-primary"
+                    className="text-[1.85rem] sm:text-3xl lg:text-page font-bold text-text-primary"
                     style={{ textWrap: "balance" }}
                   >
                     {title}
                   </h1>
                   {subtitle && (
-                    <p className="text-sm sm:text-body text-text-secondary mt-2 max-w-2xl">
+                    <p className="text-sm sm:text-body text-text-secondary mt-2 max-w-2xl mx-auto">
                       {subtitle}
                     </p>
                   )}
                 </div>
                 {action && (
-                  <div data-action className="shrink-0 w-full sm:w-auto">
+                  <div data-action className="shrink-0 w-full sm:w-auto mx-auto">
                     {action}
                   </div>
                 )}

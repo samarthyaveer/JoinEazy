@@ -1,15 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      fontFamily: {
-        sans: ['"Geist Sans"', 'ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'monospace'],
-      },
+      extend: {
+        fontFamily: {
+          sans: ['"Caudex"', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
+          mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'monospace'],
+        },
       fontSize: {
         'hero':    ['56px', { lineHeight: '1.05', fontWeight: '700', letterSpacing: '-0.035em' }],
         'page':    ['44px', { lineHeight: '1.1',  fontWeight: '700', letterSpacing: '-0.03em' }],
@@ -19,40 +20,36 @@ export default {
         'label':   ['11px', { lineHeight: '1.4',  fontWeight: '500', letterSpacing: '0.06em' }],
       },
       colors: {
-        /* Surface — warm off-white base (Awwwards SOTDs) */
+        /* Surface tokens */
         surface: {
-          DEFAULT: '#FAFAF8',
-          raised:  '#FFFFFF',
-          overlay: '#F2F2F0',
-          hover:   '#EAEAE8',
-          border:  'rgba(0,0,0,0.06)',
+          DEFAULT: "rgb(var(--color-surface) / <alpha-value>)",
+          raised: "rgb(var(--color-surface-raised) / <alpha-value>)",
+          overlay: "rgb(var(--color-surface-overlay) / <alpha-value>)",
+          hover: "rgb(var(--color-surface-hover) / <alpha-value>)",
+          border: "rgb(var(--color-border) / <alpha-value>)",
         },
-        /* Accent — electric blue (Awwwards staple) */
         accent: {
-          DEFAULT: '#0055FF',
-          hover:   '#0044CC',
-          light:   'rgba(0,85,255,0.08)',
-          muted:   'rgba(0,85,255,0.15)',
-          text:    '#0055FF',
+          DEFAULT: "rgb(var(--color-accent) / <alpha-value>)",
+          hover: "rgb(var(--color-accent-hover) / <alpha-value>)",
+          light: "rgb(var(--color-accent) / 0.08)",
+          muted: "rgb(var(--color-accent) / 0.15)",
+          text: "rgb(var(--color-accent) / <alpha-value>)",
         },
-        /* Text — rich black scale (never pure #000) */
         text: {
-          primary:   '#0F0F0F',
-          secondary: '#6B6B6B',
-          tertiary:  '#A0A0A0',
-          inverse:   '#FFFFFF',
+          primary: "rgb(var(--color-text-primary) / <alpha-value>)",
+          secondary: "rgb(var(--color-text-secondary) / <alpha-value>)",
+          tertiary: "rgb(var(--color-text-tertiary) / <alpha-value>)",
+          inverse: "rgb(var(--color-text-inverse) / <alpha-value>)",
         },
-        /* Borders — barely-there for light theme */
         border: {
-          DEFAULT: 'rgba(0,0,0,0.06)',
-          subtle:  'rgba(0,0,0,0.03)',
-          strong:  'rgba(0,0,0,0.12)',
+          DEFAULT: "rgb(var(--color-border) / 0.08)",
+          subtle: "rgb(var(--color-border-subtle) / 0.06)",
+          strong: "rgb(var(--color-border-strong) / 0.14)",
         },
-        /* Semantic — vivid & accessible on light bg */
         semantic: {
-          success: '#16A34A',
-          warning: '#D97706',
-          danger:  '#DC2626',
+          success: "rgb(var(--color-semantic-success) / <alpha-value>)",
+          warning: "rgb(var(--color-semantic-warning) / <alpha-value>)",
+          danger: "rgb(var(--color-semantic-danger) / <alpha-value>)",
         },
       },
       spacing: {

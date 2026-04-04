@@ -58,6 +58,7 @@ export default function InlineGradingPanel({ questions, scores, onUpdate }) {
                 </label>
                 <input
                   id={`score-${q.id}`}
+                  name={`score-${q.id}`}
                   type="number"
                   min={0}
                   max={q.maxMarks}
@@ -85,6 +86,7 @@ export default function InlineGradingPanel({ questions, scores, onUpdate }) {
                 </label>
                 <textarea
                   id={`comment-${q.id}`}
+                  name={`comment-${q.id}`}
                   rows={2}
                   className="input-field mt-2"
                   placeholder="Optional note"

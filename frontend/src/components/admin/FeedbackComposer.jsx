@@ -70,6 +70,8 @@ export default function FeedbackComposer({ submissionId, value, onChange }) {
         />
       ) : (
         <textarea
+          id={`feedback-notes-${submissionId || "draft"}`}
+          name="feedbackNotes"
           rows={4}
           maxLength={MAX_CHARS}
           className="input-field min-h-[140px]"

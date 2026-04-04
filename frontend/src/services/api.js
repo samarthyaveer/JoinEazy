@@ -1,10 +1,4 @@
 import axios from "axios";
-import {
-  MOCK_STATS,
-  MOCK_SUBMISSIONS,
-  MOCK_ACTIVITY,
-  getMockSubmissionDetail,
-} from "./mockData";
 
 /**
  * Global API configuration and axios instance.
@@ -14,20 +8,6 @@ const api = axios.create({
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
-
-const isDev = import.meta.env.DEV;
-
-const withMockFallback = async (request, fallback) => {
-  try {
-    return await request;
-  } catch (err) {
-    if (isDev && err?.status === 404) {
-      const data = typeof fallback === "function" ? fallback() : fallback;
-      return { data };
-    }
-    throw err;
-  }
-};
 
 // Response interceptor for unified error formatting and auth handling
 api.interceptors.response.use(
@@ -108,113 +88,31 @@ export const studentApi = {
     api.post(`/submissions/${submissionId}/confirm`, data),
 };
 
-const applySubmissionFilters = (items, params = {}) => {
-  const status = params.status || "all";
-  const search = (params.search || "").trim().toLowerCase();
-  const sort = params.sort || "newest";
-
-  let filtered = items.slice();
-
-  if (status === "graded") {
-    filtered = filtered.filter((s) => s.status === "graded");
-  } else if (status === "ungraded") {
-    filtered = filtered.filter((s) => s.status === "ungraded");
-  } else if (status === "late") {
-    filtered = filtered.filter((s) => s.isLate);
-  }
-
-  if (search) {
-    filtered = filtered.filter((s) =>
-      s.studentName.toLowerCase().includes(search),
-    );
-  }
-
-  if (sort === "oldest") {
-    filtered.sort(
-      (a, b) => new Date(a.submitted_at) - new Date(b.submitted_at),
-    );
-  } else if (sort === "name") {
-    filtered.sort((a, b) => a.studentName.localeCompare(b.studentName));
-  } else {
-    filtered.sort(
-      (a, b) => new Date(b.submitted_at) - new Date(a.submitted_at),
-    );
-  }
-
-  return filtered;
-};
-
-// Assignment stats
 export const getAssignmentStats = (assignmentId) =>
-  withMockFallback(api.get(`/assignments/${assignmentId}/stats`), () => ({
-    ...MOCK_STATS,
-    assignmentId,
-  }));
+  api.get(`/assignments/${assignmentId}/stats`);
 
-// All submissions for an assignment
 export const getSubmissions = (assignmentId, params = {}) =>
-  withMockFallback(
-    api.get(`/submissions/by-assignment/${assignmentId}`, { params }),
-    () => ({
-      submissions: applySubmissionFilters(
-        MOCK_SUBMISSIONS.filter((s) => s.assignmentId === Number(assignmentId)),
-        params,
-      ),
-    }),
-  );
+  api.get(`/submissions/by-assignment/${assignmentId}`, { params });
 
-// Single submission detail
 export const getSubmissionDetail = (submissionId) =>
-  withMockFallback(api.get(`/submissions/${submissionId}`), () => {
-    const detail = getMockSubmissionDetail(submissionId);
-    return detail ? { submission: detail } : { submission: null };
-  });
+  api.get(`/submissions/${submissionId}`);
 
-// Save/update grade
 export const saveGrade = (submissionId, payload) =>
-  withMockFallback(
-    api.post(`/submissions/${submissionId}/save-grade`, payload),
-    () => ({
-      success: true,
-    }),
-  );
+  api.post(`/submissions/${submissionId}/save-grade`, payload);
 
-// Publish grade
 export const publishGrade = (submissionId) =>
-  withMockFallback(api.post(`/submissions/${submissionId}/publish-grade`), () => ({
-    success: true,
-  }));
+  api.post(`/submissions/${submissionId}/publish-grade`);
 
-// Bulk publish
 export const bulkPublishGrades = (submissionIds) =>
-  withMockFallback(
-    api.post(`/submissions/bulk/publish`, { submissionIds }),
-    () => ({
-      success: true,
-      count: submissionIds.length,
-    }),
-  );
+  api.post(`/submissions/bulk/publish`, { submissionIds });
 
-// Pending review count
 export const getPendingReviewCount = () =>
-  withMockFallback(api.get("/submissions/pending-count"), () => ({
-    count: MOCK_SUBMISSIONS.filter((s) => s.status === "ungraded").length,
-  }));
+  api.get("/submissions/pending-count");
 
-// Activity feed
 export const getActivityFeed = (limit = 10) =>
-  withMockFallback(
-    api.get("/professor/activity", { params: { limit } }),
-    () => ({
-      activity: MOCK_ACTIVITY.slice(0, limit),
-    }),
-  );
+  api.get("/professor/activity", { params: { limit } });
 
-// Export stats (CSV blob)
 export const exportStatsCSV = (assignmentId) =>
-  withMockFallback(
-    api.get(`/assignments/${assignmentId}/export`, { responseType: "blob" }),
-    () => new Blob([""], { type: "text/csv" }),
-  );
+  api.get(`/assignments/${assignmentId}/export`, { responseType: "blob" });
 
 export default api;

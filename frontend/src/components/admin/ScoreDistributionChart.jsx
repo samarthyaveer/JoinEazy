@@ -58,27 +58,31 @@ export default function ScoreDistributionChart({ scores = [], averageScore }) {
       <div style={{ width: "100%", height: 260 }}>
         <ResponsiveContainer>
           <BarChart data={data} layout="vertical" margin={{ left: 12 }}>
-            <XAxis type="number" tick={{ fontSize: 11, fill: "#A0A0A0" }} />
+            <XAxis
+              type="number"
+              tick={{ fontSize: 11, fill: "rgb(var(--color-text-tertiary))" }}
+            />
             <YAxis
               type="category"
               dataKey="label"
-              tick={{ fontSize: 11, fill: "#A0A0A0" }}
+              tick={{ fontSize: 11, fill: "rgb(var(--color-text-tertiary))" }}
               width={54}
             />
             <Tooltip
-              cursor={{ fill: "rgba(0,0,0,0.04)" }}
+              cursor={{ fill: "rgb(var(--color-text-primary) / 0.06)" }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const entry = payload[0].payload;
                 return (
                   <div
                     style={{
-                      background: "#FFFFFF",
-                      border: "1px solid rgba(0,0,0,0.08)",
+                      background: "rgb(var(--color-surface-raised) / 0.96)",
+                      border: "1px solid rgb(var(--color-border) / 0.12)",
                       borderRadius: 12,
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+                      boxShadow: "var(--shadow-card)",
                       fontSize: 12,
                       padding: "8px 10px",
+                      color: "rgb(var(--color-text-primary))",
                     }}
                   >
                     <p style={{ fontWeight: 600, marginBottom: 4 }}>
@@ -98,7 +102,9 @@ export default function ScoreDistributionChart({ scores = [], averageScore }) {
                   <Cell
                     key={entry.label}
                     fill={
-                      isAbove ? "rgba(22,163,74,0.65)" : "rgba(217,119,6,0.6)"
+                      isAbove
+                        ? "rgb(var(--color-semantic-success) / 0.7)"
+                        : "rgb(var(--color-semantic-warning) / 0.7)"
                     }
                   />
                 );

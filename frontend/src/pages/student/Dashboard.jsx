@@ -71,22 +71,21 @@ export default function StudentDashboard() {
 
   return (
     <PageShell title="Overview" subtitle="Assignments and groups">
-      {/* Stats row */}
       <div
         ref={statsRef}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
+        className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8"
       >
         <StatCard label="Active work" value={assignments.length} />
         <StatCard label="My groups" value={groups.length} />
         <StatCard
+          className="col-span-2 xl:col-span-1"
           label="Submitted groups"
           value={submittedCount}
           sublabel={`of ${groups.length} groups`}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-        {/* Upcoming */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
         <div>
           <h2 className="text-section text-text-primary mb-4 sm:mb-5">
             Due soon

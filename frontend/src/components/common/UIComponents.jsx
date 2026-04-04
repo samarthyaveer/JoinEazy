@@ -119,10 +119,10 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+    <div className="flex flex-col items-center justify-center py-14 sm:py-18 text-center px-4">
       <div
         ref={iconRef}
-        className="w-14 h-14 rounded-2xl bg-surface-overlay flex items-center justify-center mb-5"
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-surface-overlay flex items-center justify-center mb-4"
         style={{ willChange: "transform" }}
       >
         <Icon
@@ -132,11 +132,11 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
           aria-hidden="true"
         />
       </div>
-      <h3 className="text-xl sm:text-body font-semibold text-text-primary mb-1">
+      <h3 className="text-lg sm:text-body font-semibold text-text-primary mb-1">
         {title}
       </h3>
       {description && (
-        <p className="text-sm sm:text-meta text-text-secondary max-w-sm mb-6">
+        <p className="text-sm sm:text-meta text-text-secondary max-w-sm mb-5">
           {description}
         </p>
       )}
@@ -152,7 +152,7 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
  * @param {number|string} props.value - The metric value (can include text)
  * @param {string} [props.sublabel] - Subtext directly underneath metric
  */
-export function StatCard({ label, value, sublabel }) {
+export function StatCard({ label, value, sublabel, className = "" }) {
   const valueRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -183,13 +183,13 @@ export function StatCard({ label, value, sublabel }) {
   }, [value]);
 
   return (
-    <div className="card px-4 sm:px-6 py-4 sm:py-6 group hover:shadow-card-hover transition-shadow">
+    <div className={`card px-4 sm:px-5 py-4 sm:py-5 group transition-shadow ${className}`.trim()}>
       <p className="text-xs sm:text-label text-text-tertiary uppercase tracking-widest">
         {label}
       </p>
       <p
         ref={valueRef}
-        className="text-2xl sm:text-[36px] font-bold text-text-primary mt-2 leading-none"
+        className="text-[1.65rem] sm:text-[2rem] lg:text-[2.25rem] font-bold text-text-primary mt-2 leading-none"
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {prefersReducedMotion ? value : 0}

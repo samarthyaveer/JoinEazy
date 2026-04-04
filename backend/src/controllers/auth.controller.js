@@ -1,5 +1,5 @@
 const authService = require('../services/auth.service');
-const { getCookieOptions } = require('../utils/token');
+const { getCookieOptions, verifyToken } = require('../utils/token');
 
 async function register(req, res, next) {
   try {
@@ -30,9 +30,21 @@ async function logout(_req, res) {
 
 async function getMe(req, res, next) {
   try {
-    const profile = await authService.getProfile(req.user.id);
+    const token = req.cookies?.token;
+    if (!token) {
+      return res.json({ user: null });
+    }
+
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch (err) {
+      return res.json({ user: null });
+    }
+
+    const profile = await authService.getProfile(decoded.id);
     if (!profile) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.json({ user: null });
     }
     res.json({ user: profile });
   } catch (err) {

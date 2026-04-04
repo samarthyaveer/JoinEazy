@@ -162,7 +162,7 @@ export default function AdminAssignments() {
   return (
     <PageShell
       title="Assignments"
-      subtitle="A cleaner planning board for creating, editing, and monitoring assignment readiness."
+      subtitle="Create, review, and track assignment readiness in one place."
       action={
         <Link to="/admin/assignments/new" className="btn-primary w-full sm:w-auto">
           <Plus size={16} aria-hidden="true" />
@@ -170,17 +170,18 @@ export default function AdminAssignments() {
         </Link>
       }
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard label="Total assignments" value={assignments.length} />
         <StatCard label="Due this week" value={stats.dueSoon} />
         <StatCard
+          className="col-span-2 xl:col-span-1"
           label="Submitted groups"
           value={stats.totalSubmitted}
           sublabel={`${stats.totalGroups} groups created`}
         />
       </div>
 
-      <div className="card p-4 sm:p-5 mb-6">
+      <div className="card p-4 sm:p-5 mb-5 sm:mb-6">
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           <div className="relative flex-1 max-w-xl">
             <Search
@@ -189,10 +190,13 @@ export default function AdminAssignments() {
               aria-hidden="true"
             />
             <input
+              id="assignment-search"
+              name="assignmentSearch"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               className="input-field pl-9"
               placeholder="Search by assignment title or instructions"
+              aria-label="Search assignments"
             />
           </div>
 
@@ -234,7 +238,7 @@ export default function AdminAssignments() {
           />
         )
       ) : (
-        <div ref={cardsRef} className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div ref={cardsRef} className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5">
           {filteredAssignments.map((assignment) => {
             const dueDate = new Date(assignment.due_date);
             const isPastDue = dueDate < new Date();
@@ -244,7 +248,7 @@ export default function AdminAssignments() {
               <article
                 key={assignment.id}
                 data-assignment-card
-                className="card p-5 sm:p-6"
+                className="card p-4 sm:p-5 lg:p-6"
               >
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -274,8 +278,8 @@ export default function AdminAssignments() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="rounded-[22px] border border-black/6 bg-surface-overlay/65 p-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="rounded-[22px] border border-border bg-surface-overlay/65 p-4">
                       <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                         <CalendarClock size={14} aria-hidden="true" />
                         Due
@@ -288,7 +292,7 @@ export default function AdminAssignments() {
                       </p>
                     </div>
 
-                    <div className="rounded-[22px] border border-black/6 bg-surface-overlay/65 p-4">
+                    <div className="rounded-[22px] border border-border bg-surface-overlay/65 p-4">
                       <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                         <Users size={14} aria-hidden="true" />
                         Groups
@@ -301,7 +305,7 @@ export default function AdminAssignments() {
                       </p>
                     </div>
 
-                    <div className="rounded-[22px] border border-black/6 bg-surface-overlay/65 p-4">
+                    <div className="rounded-[22px] border border-border bg-surface-overlay/65 p-4 col-span-2 lg:col-span-1">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">
                         Submissions
                       </p>
@@ -314,14 +318,14 @@ export default function AdminAssignments() {
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] border border-black/6 bg-white/80 p-4 sm:p-5">
+                  <div className="rounded-[24px] border border-border bg-surface-raised/80 p-4 sm:p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-meta font-semibold text-text-primary">
                           Submission progress
                         </p>
                         <p className="text-meta text-text-secondary mt-1">
-                          A fast read on how close this assignment is to fully submitted.
+                          A quick read on how close this assignment is to completion.
                         </p>
                       </div>
                       <span className="text-label text-text-tertiary">

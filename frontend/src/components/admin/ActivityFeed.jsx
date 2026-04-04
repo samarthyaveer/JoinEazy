@@ -13,13 +13,16 @@ const getInitials = (name) =>
 
 const describeEvent = (event) => {
   if (event.type === "submitted") {
-    return `${event.studentName} sent ${event.assignmentName}`;
+    return `${event.studentName} submitted ${event.assignmentName}`;
+  }
+  if (event.type === "graded") {
+    return `${event.studentName} received a draft grade in ${event.assignmentName}`;
   }
   if (event.type === "regrade") {
     return `${event.studentName} requested regrade for ${event.assignmentName}`;
   }
   if (event.type === "published") {
-    return `Grades published for ${event.assignmentName} (${event.count} students)`;
+    return `Grade published for ${event.assignmentName}`;
   }
   return "Recent update";
 };

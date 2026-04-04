@@ -21,13 +21,13 @@ const saveGradeSchema = Joi.object({
         comment: Joi.string().allow('', null).optional(),
       })
     )
-    .required(),
+    .default([]),
   totalScore: Joi.number().min(0).required(),
+  totalMarks: Joi.number().positive().required(),
   feedback: Joi.string().allow('', null).optional(),
 });
 
 const reviewSchema = Joi.object({
-  // Accept both legacy 'accepted'/'rejected' and canonical 'graded'
   evaluationStatus: Joi.string()
     .valid('accepted', 'rejected', 'graded')
     .required(),
@@ -41,7 +41,7 @@ const bulkPublishSchema = Joi.object({
 
 const bulkReviewSchema = Joi.object({
   submissionIds: Joi.array().items(Joi.number().integer()).min(1).required(),
-  evaluationStatus: Joi.string().valid('graded').required(),
+  evaluationStatus: Joi.string().valid('accepted', 'rejected').required(),
   feedback: Joi.string().allow('', null).optional(),
 });
 

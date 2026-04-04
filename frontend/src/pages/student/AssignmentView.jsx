@@ -43,7 +43,7 @@ function MessageBanner({ type = "info", text }) {
   const styles = {
     error: "border-semantic-danger/20 bg-semantic-danger/6 text-semantic-danger",
     success: "border-semantic-success/20 bg-semantic-success/8 text-semantic-success",
-    info: "border-black/6 bg-surface-overlay/80 text-text-secondary",
+    info: "border-border bg-surface-overlay/80 text-text-secondary",
   };
 
   return (
@@ -68,7 +68,7 @@ function WorkflowStep({
   return (
     <div
       className={`rounded-[24px] border p-4 sm:p-5 ${
-        done ? "border-accent/20 bg-accent/6" : "border-black/6 bg-white/75"
+        done ? "border-accent/20 bg-accent/6" : "border-border bg-surface-raised/78"
       }`}
     >
       <div className="flex items-start gap-4">
@@ -76,7 +76,7 @@ function WorkflowStep({
           className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
             done
               ? "bg-accent text-white"
-              : "bg-surface-overlay text-text-tertiary border border-black/6"
+              : "bg-surface-overlay text-text-tertiary border border-border"
           }`}
         >
           {done ? <CheckCircle2 size={18} aria-hidden="true" /> : <span className="text-meta font-semibold">{step}</span>}
@@ -302,7 +302,7 @@ export default function AssignmentView() {
     >
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_360px] gap-6 xl:gap-8">
         <div className="space-y-6">
-          <section className="card p-5 sm:p-6">
+          <section className="card p-4 sm:p-5 lg:p-6">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -324,7 +324,7 @@ export default function AssignmentView() {
                 </p>
               </div>
 
-              <div className="rounded-[24px] border border-black/6 bg-surface-overlay/70 px-4 py-4 min-w-[220px]">
+              <div className="rounded-[24px] border border-border bg-surface-overlay/70 px-4 py-4 min-w-[220px]">
                 <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                   <CalendarClock size={14} aria-hidden="true" />
                   Deadline
@@ -340,7 +340,7 @@ export default function AssignmentView() {
           </section>
 
           {!myGroup ? (
-            <section className="card p-5 sm:p-6">
+            <section className="card p-4 sm:p-5 lg:p-6">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
                 <div className="max-w-2xl">
                   <div className="inline-flex items-center gap-2 rounded-full bg-accent/8 text-accent px-3 py-1.5 text-label mb-4">
@@ -351,16 +351,16 @@ export default function AssignmentView() {
                   <p className="text-body text-text-secondary mt-2">
                     Create a group, invite teammates, and the upload workflow becomes available immediately. You only need a group name to begin.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-                    <div className="rounded-[22px] border border-black/6 bg-white/75 p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5">
+                    <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">Step 1</p>
                       <p className="text-meta text-text-primary mt-2">Create the group</p>
                     </div>
-                    <div className="rounded-[22px] border border-black/6 bg-white/75 p-4">
+                    <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">Step 2</p>
                       <p className="text-meta text-text-primary mt-2">Invite teammates</p>
                     </div>
-                    <div className="rounded-[22px] border border-black/6 bg-white/75 p-4">
+                    <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4 col-span-2 sm:col-span-1">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">Step 3</p>
                       <p className="text-meta text-text-primary mt-2">Upload and confirm</p>
                     </div>
@@ -381,7 +381,7 @@ export default function AssignmentView() {
           ) : null}
 
           {myGroup && submission ? (
-            <section className="card p-5 sm:p-6">
+            <section className="card p-4 sm:p-5 lg:p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
                 <div>
                   <h2 className="text-section text-text-primary">Submission flow</h2>
@@ -389,7 +389,7 @@ export default function AssignmentView() {
                     Follow the steps in order so your upload is recorded cleanly for the whole group.
                   </p>
                 </div>
-                <div className="rounded-[22px] border border-black/6 bg-surface-overlay/70 px-4 py-3">
+                <div className="rounded-[22px] border border-border bg-surface-overlay/70 px-4 py-3">
                   <p className="text-label uppercase tracking-widest text-text-tertiary">
                     Team progress
                   </p>
@@ -401,7 +401,7 @@ export default function AssignmentView() {
 
               {submission.status === "submitted" ? (
                 <div className="space-y-5">
-                  <div className="rounded-[24px] border border-semantic-success/20 bg-semantic-success/8 p-4 sm:p-5">
+                <div className="rounded-[24px] border border-semantic-success/20 bg-semantic-success/8 p-4 sm:p-5">
                     <div className="flex items-start gap-3">
                       <CheckCircle2
                         size={20}
@@ -421,8 +421,33 @@ export default function AssignmentView() {
                     </div>
                   </div>
 
+                  <div className="rounded-[24px] border border-border bg-surface-raised/78 p-4 sm:p-5">
+                    <p className="text-label uppercase tracking-widest text-text-tertiary">
+                      Grade status
+                    </p>
+                    {submission.grade_published ? (
+                      <div className="mt-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="badge badge-success">
+                            Grade published
+                          </span>
+                          <span className="text-body font-semibold text-text-primary">
+                            {submission.graded_score} / {submission.total_marks}
+                          </span>
+                        </div>
+                        <p className="text-meta text-text-secondary mt-3 whitespace-pre-wrap">
+                          {submission.grade_feedback || "Your instructor did not leave score notes yet."}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-meta text-text-secondary mt-3">
+                        Your instructor has not published a grade yet.
+                      </p>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="rounded-[24px] border border-black/6 bg-white/75 p-4 sm:p-5">
+                    <div className="rounded-[24px] border border-border bg-surface-raised/78 p-4 sm:p-5">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">
                         Personal feedback
                       </p>
@@ -444,7 +469,7 @@ export default function AssignmentView() {
                       )}
                     </div>
 
-                    <div className="rounded-[24px] border border-black/6 bg-white/75 p-4 sm:p-5">
+                    <div className="rounded-[24px] border border-border bg-surface-raised/78 p-4 sm:p-5">
                       <p className="text-label uppercase tracking-widest text-text-tertiary">
                         Group feedback
                       </p>
@@ -519,7 +544,7 @@ export default function AssignmentView() {
 
         <aside className="space-y-5 xl:sticky xl:top-8 self-start">
           {myGroup ? (
-            <section className="card p-5">
+            <section className="card p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-section text-text-primary">Your group</h3>
@@ -554,7 +579,7 @@ export default function AssignmentView() {
                 {groupMembers.map((member) => (
                   <div
                     key={member.user_id}
-                    className="rounded-[20px] border border-black/6 bg-white/75 p-3"
+                    className="rounded-[20px] border border-border bg-surface-raised/78 p-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
@@ -600,7 +625,7 @@ export default function AssignmentView() {
               </div>
 
               {myGroup.my_role === "leader" ? (
-                <form onSubmit={handleAddMember} className="pt-5 mt-5 border-t border-black/6">
+                <form onSubmit={handleAddMember} className="pt-5 mt-5 border-t border-border">
                   <label
                     className="block text-label uppercase tracking-widest text-text-tertiary mb-2"
                     htmlFor="add-member-email"
@@ -640,10 +665,10 @@ export default function AssignmentView() {
             </section>
           ) : null}
 
-          <section className="card p-5">
+          <section className="card p-4 sm:p-5">
             <h3 className="text-section text-text-primary">Assignment facts</h3>
-            <dl className="space-y-4 mt-5">
-              <div className="rounded-[20px] border border-black/6 bg-surface-overlay/65 p-4">
+            <dl className="grid grid-cols-2 gap-3 mt-5">
+              <div className="rounded-[20px] border border-border bg-surface-overlay/65 p-4">
                 <dt className="text-label uppercase tracking-widest text-text-tertiary">
                   Posted by
                 </dt>
@@ -652,7 +677,7 @@ export default function AssignmentView() {
                 </dd>
               </div>
 
-              <div className="rounded-[20px] border border-black/6 bg-surface-overlay/65 p-4">
+              <div className="rounded-[20px] border border-border bg-surface-overlay/65 p-4">
                 <dt className="text-label uppercase tracking-widest text-text-tertiary">
                   Due
                 </dt>
@@ -661,7 +686,7 @@ export default function AssignmentView() {
                 </dd>
               </div>
 
-              <div className="rounded-[20px] border border-black/6 bg-surface-overlay/65 p-4">
+              <div className="rounded-[20px] border border-border bg-surface-overlay/65 p-4">
                 <dt className="text-label uppercase tracking-widest text-text-tertiary">
                   Max group size
                 </dt>
@@ -670,7 +695,7 @@ export default function AssignmentView() {
                 </dd>
               </div>
 
-              <div className="rounded-[20px] border border-black/6 bg-surface-overlay/65 p-4">
+              <div className="rounded-[20px] border border-border bg-surface-overlay/65 p-4">
                 <dt className="text-label uppercase tracking-widest text-text-tertiary">
                   Groups formed
                 </dt>
@@ -682,7 +707,7 @@ export default function AssignmentView() {
           </section>
 
           {!myGroup ? (
-            <section className="card p-5">
+            <section className="card p-4 sm:p-5">
               <EmptyState
                 icon={Users}
                 title="Group required"
@@ -754,10 +779,12 @@ export default function AssignmentView() {
           <p className="text-body text-text-secondary">
             Type the assignment title exactly to confirm the final upload step.
           </p>
-          <div className="rounded-[20px] border border-black/6 bg-surface-overlay/70 px-4 py-3 text-body font-mono text-text-primary">
+          <div className="rounded-[20px] border border-border bg-surface-overlay/70 px-4 py-3 text-body font-mono text-text-primary">
             {assignment.title}
           </div>
           <input
+            id="confirm-assignment-title"
+            name="confirmAssignmentTitle"
             className="input-field"
             placeholder="Type the exact title"
             value={confirmTitle}
