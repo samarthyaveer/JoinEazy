@@ -6,11 +6,11 @@ import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import CalendarClock from "lucide-react/dist/esm/icons/calendar-clock";
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
 import PageShell from "@/components/layout/PageShell";
+import BubbleLoader from "@/components/BubbleLoader";
 import Modal from "@/components/common/Modal";
 import ErrorBanner from "@/components/common/ErrorBanner";
 import {
   StatusBadge,
-  Spinner,
   EmptyState,
   ProgressBar,
 } from "@/components/common/UIComponents";
@@ -311,16 +311,7 @@ export default function AssignmentView() {
   };
 
   if (loading) {
-    return (
-      <PageShell
-        title="Assignment workspace"
-        subtitle="Loading instructions and group status"
-      >
-        <div className="flex justify-center py-24">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   if (pageError || !assignment) {

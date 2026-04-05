@@ -9,7 +9,8 @@ function buildWave(pct, offset, amplitude) {
   const minX = CX - CR - 14;
   const maxX = CX + CR + 14;
   let d = `M ${minX},${CY + CR + 14} L ${minX},`;
-  d += (waterY + Math.sin((minX + offset) * 0.065) * amplitude).toFixed(2) + " ";
+  d +=
+    (waterY + Math.sin((minX + offset) * 0.065) * amplitude).toFixed(2) + " ";
   for (let x = minX; x <= maxX; x += 3) {
     const y =
       waterY +
@@ -88,9 +89,24 @@ export default function BubbleLoader() {
           <circle cx={CX} cy={CY} r={CR} fill="url(#bubbleBg)" />
 
           <g clipPath="url(#bubbleClip)">
-            <path ref={(el) => (svgRefs.current.fill = el)} d="" fill="#2176c7" opacity="0.88" />
-            <path ref={(el) => (svgRefs.current.foam1 = el)} d="" fill="#5ba8f5" opacity="0.55" />
-            <path ref={(el) => (svgRefs.current.foam2 = el)} d="" fill="#a8d4f8" opacity="0.30" />
+            <path
+              ref={(el) => (svgRefs.current.fill = el)}
+              d=""
+              fill="#2176c7"
+              opacity="0.88"
+            />
+            <path
+              ref={(el) => (svgRefs.current.foam1 = el)}
+              d=""
+              fill="#5ba8f5"
+              opacity="0.55"
+            />
+            <path
+              ref={(el) => (svgRefs.current.foam2 = el)}
+              d=""
+              fill="#a8d4f8"
+              opacity="0.30"
+            />
           </g>
 
           <circle cx={CX} cy={CY} r={CR} fill="url(#bubbleSheen)" />

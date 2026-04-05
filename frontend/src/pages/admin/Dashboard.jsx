@@ -8,6 +8,7 @@ import ActivityFeed from "@/components/admin/ActivityFeed";
 import QuickGradeCard from "@/components/admin/QuickGradeCard";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorBanner from "@/components/common/ErrorBanner";
+import BubbleLoader from "@/components/BubbleLoader";
 import {
   adminApi,
   getActivityFeed,
@@ -156,6 +157,10 @@ export default function AdminDashboard() {
     ];
   }, [overview]);
 
+  if (loading) {
+    return <BubbleLoader />;
+  }
+
   return (
     <PageShell
       title="Overview"
@@ -170,13 +175,7 @@ export default function AdminDashboard() {
         </Link>
       }
     >
-      {loading ? (
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 animate-pulse">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="card h-28 bg-surface-overlay" />
-          ))}
-        </div>
-      ) : error ? (
+      {error ? (
         <ErrorBanner message={error} onRetry={loadDashboard} />
       ) : (
         <div className="space-y-8">

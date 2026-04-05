@@ -6,6 +6,7 @@ import PageShell from "@/components/layout/PageShell";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorBanner from "@/components/common/ErrorBanner";
 import Modal from "@/components/common/Modal";
+import BubbleLoader from "@/components/BubbleLoader";
 import { getSubmissions, bulkPublishGrades } from "@/services/api";
 import { timeAgo } from "@/utils/time";
 
@@ -191,6 +192,10 @@ export default function SubmissionReview() {
   const selectedCount = selectedIds.size;
   const allSelected = filtered.length > 0 && selectedCount === filtered.length;
 
+  if (isLoading) {
+    return <BubbleLoader />;
+  }
+
   return (
     <PageShell
       title="Review submissions"
@@ -283,16 +288,7 @@ export default function SubmissionReview() {
         </div>
       ) : null}
 
-      {isLoading ? (
-        <div className="card p-6 animate-pulse">
-          <div className="h-4 w-40 bg-surface-overlay rounded mb-4" />
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, idx) => (
-              <div key={idx} className="h-12 bg-surface-overlay rounded" />
-            ))}
-          </div>
-        </div>
-      ) : error ? (
+      {error ? (
         <ErrorBanner message={error} onRetry={fetchSubmissions} />
       ) : !filtered.length ? (
         <EmptyState

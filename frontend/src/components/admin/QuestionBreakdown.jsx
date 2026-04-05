@@ -161,8 +161,9 @@ export default function QuestionBreakdown({ questions = [] }) {
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            background: "rgb(var(--color-surface-raised) / 0.96)",
-                            border: "1px solid rgb(var(--color-border) / 0.12)",
+                            background:
+                              "linear-gradient(145deg, rgb(var(--glass-bg-strong) / 0.9), rgb(var(--glass-bg) / 0.55))",
+                            border: "1px solid rgb(var(--glass-border) / 0.35)",
                             borderRadius: 12,
                             boxShadow: "var(--shadow-card)",
                             fontSize: 12,

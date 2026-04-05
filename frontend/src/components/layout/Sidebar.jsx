@@ -10,15 +10,51 @@ import LogOut from "lucide-react/dist/esm/icons/log-out";
 import X from "lucide-react/dist/esm/icons/x";
 
 const STUDENT_LINKS = [
-  { to: "/dashboard", label: "Overview", shortLabel: "Home", icon: LayoutDashboard, exact: true },
-  { to: "/assignments", label: "Assignments", shortLabel: "Work", icon: FileText, exact: true },
-  { to: "/my-groups", label: "Groups", shortLabel: "Groups", icon: Users, exact: true },
+  {
+    to: "/dashboard",
+    label: "Overview",
+    shortLabel: "Home",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    to: "/assignments",
+    label: "Assignments",
+    shortLabel: "Work",
+    icon: FileText,
+    exact: true,
+  },
+  {
+    to: "/my-groups",
+    label: "Groups",
+    shortLabel: "Groups",
+    icon: Users,
+    exact: true,
+  },
 ];
 
 const ADMIN_LINKS = [
-  { to: "/admin/assignments", label: "Assignments", shortLabel: "List", icon: FileText, exact: true },
-  { to: "/admin/assignments/new", label: "New assignment", shortLabel: "New", icon: Plus, exact: true },
-  { to: "/admin", label: "Overview", shortLabel: "Home", icon: LayoutDashboard, exact: true },
+  {
+    to: "/admin/assignments",
+    label: "Assignments",
+    shortLabel: "List",
+    icon: FileText,
+    exact: true,
+  },
+  {
+    to: "/admin/assignments/new",
+    label: "New assignment",
+    shortLabel: "New",
+    icon: Plus,
+    exact: true,
+  },
+  {
+    to: "/admin",
+    label: "Overview",
+    shortLabel: "Home",
+    icon: LayoutDashboard,
+    exact: true,
+  },
 ];
 
 function getUserInitials(fullName) {
@@ -55,25 +91,34 @@ export default function Sidebar({ isOpen, onClose }) {
     <>
       {isOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] bg-surface-raised/96 backdrop-blur-2xl border-r border-border shadow-2xl transform transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] bg-surface-overlay/70 backdrop-blur-2xl border-r border-border/60 shadow-2xl transform transition-transform duration-300 ease-out lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between px-5 py-5 border-b border-border">
+          <div className="flex items-center justify-between px-5 py-5 border-b border-border/60">
             <div className="flex items-center gap-3">
-              <img src="/joineazy.png" alt="JoinEazy Logo" width={30} height={30} />
+              <img
+                src="/joineazy.png"
+                alt="JoinEazy Logo"
+                width={30}
+                height={30}
+              />
               <div>
-                <p className="text-body font-semibold text-text-primary">JoinEazy</p>
+                <p className="text-body font-semibold text-text-primary">
+                  JoinEazy
+                </p>
                 <p className="text-label text-text-secondary">
-                  {user?.role === "admin" ? "Instructor workspace" : "Student workspace"}
+                  {user?.role === "admin"
+                    ? "Instructor workspace"
+                    : "Student workspace"}
                 </p>
               </div>
             </div>
@@ -110,10 +155,10 @@ export default function Sidebar({ isOpen, onClose }) {
             })}
           </nav>
 
-          <div className="border-t border-border px-4 py-4 space-y-3">
+          <div className="border-t border-border/60 px-4 py-4 space-y-3">
             <ThemeToggle />
 
-            <div className="rounded-[24px] border border-border bg-surface-overlay/75 p-4">
+            <div className="rounded-[24px] border border-border/60 bg-surface-overlay/60 p-4 backdrop-blur">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-accent text-white flex items-center justify-center text-meta font-semibold">
                   {getUserInitials(user?.full_name)}
@@ -140,9 +185,14 @@ export default function Sidebar({ isOpen, onClose }) {
       </aside>
 
       <div className="hidden lg:flex fixed left-1/2 bottom-5 -translate-x-1/2 z-40">
-        <div className="flex items-center gap-2 rounded-[32px] border border-border bg-surface-raised/88 px-3 py-3 shadow-[0_22px_50px_rgba(15,15,15,0.14)] backdrop-blur-2xl">
-          <div className="hidden xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/72 px-4 py-3 border border-border">
-            <img src="/joineazy.png" alt="JoinEazy Logo" width={28} height={28} />
+        <div className="flex items-center gap-2 rounded-[32px] border border-border/60 bg-surface-overlay/70 px-3 py-3 shadow-[0_22px_50px_rgba(15,15,15,0.14)] backdrop-blur-2xl">
+          <div className="hidden xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/70 px-4 py-3 border border-border/60">
+            <img
+              src="/joineazy.png"
+              alt="JoinEazy Logo"
+              width={28}
+              height={28}
+            />
             <div>
               <p className="text-meta font-semibold text-text-primary leading-none">
                 JoinEazy
@@ -176,12 +226,12 @@ export default function Sidebar({ isOpen, onClose }) {
             })}
           </div>
 
-          <div className="w-px h-12 bg-border mx-1" />
+          <div className="w-px h-12 bg-border/60 mx-1" />
 
           <div className="flex items-center gap-2">
             <ThemeToggle compact />
 
-            <div className="hidden 2xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/72 px-4 py-3 border border-border">
+            <div className="hidden 2xl:flex items-center gap-3 rounded-[22px] bg-surface-overlay/70 px-4 py-3 border border-border/60">
               <div className="w-10 h-10 rounded-2xl bg-accent text-white flex items-center justify-center text-meta font-semibold">
                 {getUserInitials(user?.full_name)}
               </div>

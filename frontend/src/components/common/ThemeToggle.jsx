@@ -14,7 +14,7 @@ export default function ThemeToggle({
       <button
         type="button"
         onClick={toggleTheme}
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-surface-raised/85 text-text-secondary transition-colors hover:bg-surface-overlay hover:text-text-primary ${className}`.trim()}
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border/60 bg-surface-overlay/60 text-text-secondary transition-colors hover:bg-surface-overlay hover:text-text-primary backdrop-blur ${className}`.trim()}
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
         title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       >
@@ -27,7 +27,7 @@ export default function ThemeToggle({
     <button
       type="button"
       onClick={toggleTheme}
-      className={`flex items-center justify-between gap-3 rounded-[20px] border border-border bg-surface-raised/80 px-4 py-3 text-left transition-colors hover:bg-surface-overlay ${className}`.trim()}
+      className={`flex items-center justify-between gap-3 rounded-[20px] border border-border/60 bg-surface-overlay/60 px-4 py-3 text-left transition-colors hover:bg-surface-overlay backdrop-blur ${className}`.trim()}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
       <span className="flex items-center gap-3 min-w-0">
@@ -40,7 +40,9 @@ export default function ThemeToggle({
               {isDark ? "Light appearance" : "Dark appearance"}
             </span>
             <span className="block text-label text-text-tertiary mt-1">
-              {isDark ? "Switch to the brighter view" : "Switch to the dimmer view"}
+              {isDark
+                ? "Switch to the brighter view"
+                : "Switch to the dimmer view"}
             </span>
           </span>
         ) : null}
@@ -49,7 +51,7 @@ export default function ThemeToggle({
       <span
         className={`relative inline-flex h-7 w-12 shrink-0 rounded-full border transition-colors ${
           isDark
-            ? "border-accent/20 bg-accent/80"
+            ? "border-accent/30 bg-accent/80"
             : "border-border-strong bg-surface-overlay"
         }`}
       >

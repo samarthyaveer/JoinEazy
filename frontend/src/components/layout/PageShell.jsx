@@ -98,9 +98,21 @@ export default function PageShell({ title, subtitle, action, children }) {
           width: "560px",
           height: "560px",
           background:
-            "radial-gradient(circle, rgb(var(--color-accent) / 0.1) 0%, rgb(var(--color-accent) / 0.04) 38%, transparent 72%)",
+            "radial-gradient(circle, rgb(var(--color-accent) / 0.14) 0%, rgb(var(--color-accent) / 0.06) 40%, transparent 72%)",
           top: "-8%",
           right: "-8%",
+          zIndex: 0,
+        }}
+      />
+      <div
+        className="gradient-orb pointer-events-none absolute hidden lg:block"
+        style={{
+          width: "420px",
+          height: "420px",
+          background:
+            "radial-gradient(circle, rgb(var(--color-semantic-success) / 0.12) 0%, rgb(var(--color-semantic-success) / 0.05) 40%, transparent 70%)",
+          bottom: "-12%",
+          left: "-6%",
           zIndex: 0,
         }}
       />
@@ -108,12 +120,12 @@ export default function PageShell({ title, subtitle, action, children }) {
         className="pointer-events-none absolute inset-x-0 top-0 h-[320px] z-0"
         style={{
           background:
-            "linear-gradient(180deg, rgb(var(--color-surface-raised) / 0.9) 0%, rgb(var(--color-surface-raised) / 0.45) 40%, transparent 100%)",
+            "linear-gradient(180deg, rgb(var(--color-surface-overlay) / 0.7) 0%, rgb(var(--color-surface) / 0.25) 45%, transparent 100%)",
         }}
       />
 
       <div className="relative z-10 min-h-screen">
-        <header className="lg:hidden flex items-center justify-between h-16 px-4 sm:px-6 bg-surface-raised/88 backdrop-blur-xl border-b border-border sticky top-0 z-30">
+        <header className="lg:hidden flex items-center justify-between h-16 px-4 sm:px-6 bg-surface-overlay/70 backdrop-blur-2xl border-b border-border/60 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <img
               src="/joineazy.png"
@@ -141,31 +153,33 @@ export default function PageShell({ title, subtitle, action, children }) {
           </div>
         </header>
 
-        <main className="px-4 sm:px-5 lg:px-8 pt-5 pb-28 lg:pt-8 lg:pb-36">
-          <div className="max-w-[88rem] mx-auto w-full">
-            <div
-              ref={headerRef}
-              className="flex flex-col gap-4 mb-6 sm:mb-8"
-            >
-              <div className="flex flex-col items-center gap-4 text-center">
-                <div className="max-w-3xl mx-auto">
-                  <h1
-                    className="text-[1.85rem] sm:text-3xl lg:text-page font-bold text-text-primary"
-                    style={{ textWrap: "balance" }}
-                  >
-                    {title}
-                  </h1>
-                  {subtitle && (
-                    <p className="text-sm sm:text-body text-text-secondary mt-2 max-w-2xl mx-auto">
-                      {subtitle}
-                    </p>
+        <main className="px-4 sm:px-6 lg:px-8 pt-5 sm:pt-6 lg:pt-10 pb-24 lg:pb-32">
+          <div className="max-w-[84rem] 2xl:max-w-[88rem] mx-auto w-full">
+            <div ref={headerRef} className="mb-5 sm:mb-7">
+              <div className="card p-4 sm:p-5 lg:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 text-center lg:text-left">
+                  <div className="max-w-3xl">
+                    <h1
+                      className="text-[1.7rem] sm:text-2xl lg:text-page font-bold text-text-primary"
+                      style={{ textWrap: "balance" }}
+                    >
+                      {title}
+                    </h1>
+                    {subtitle && (
+                      <p className="text-sm sm:text-body text-text-secondary mt-2">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+                  {action && (
+                    <div
+                      data-action
+                      className="shrink-0 w-full sm:w-auto mx-auto lg:mx-0"
+                    >
+                      {action}
+                    </div>
                   )}
                 </div>
-                {action && (
-                  <div data-action className="shrink-0 w-full sm:w-auto mx-auto">
-                    {action}
-                  </div>
-                )}
               </div>
             </div>
 

@@ -52,8 +52,9 @@ export function RagDot({ status }) {
  * @param {number} props.value - The current integer value
  * @param {number} [props.max=100] - The maximum integer value
  */
-export function ProgressBar({ value, max = 100 }) {
+export function ProgressBar({ value, max = 100, showLabel = true }) {
   const pct = max > 0 ? Math.min(Math.round((value / max) * 100), 100) : 0;
+  const tone = pct >= 80 ? "good" : pct >= 50 ? "mid" : "low";
   const barRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -72,21 +73,27 @@ export function ProgressBar({ value, max = 100 }) {
     return () => ctx.revert();
   }, [pct]);
 
+  const containerClass = showLabel
+    ? "flex items-center gap-3"
+    : "flex items-center";
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 h-1.5 bg-surface-overlay rounded-full overflow-hidden">
+    <div className={containerClass}>
+      <div className="progress-track flex-1">
         <div
           ref={barRef}
-          className="h-full bg-accent rounded-full transition-all duration-300"
+          className={`progress-fill progress-${tone}`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span
-        className="text-label text-text-tertiary font-mono w-8 text-right"
-        style={{ fontVariantNumeric: "tabular-nums" }}
-      >
-        {pct}%
-      </span>
+      {showLabel ? (
+        <span
+          className="text-label text-text-tertiary font-mono w-8 text-right"
+          style={{ fontVariantNumeric: "tabular-nums" }}
+        >
+          {pct}%
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -119,10 +126,10 @@ export function EmptyState({ icon: Icon = Inbox, title, description, action }) {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-14 sm:py-18 text-center px-4">
+    <div className="card flex flex-col items-center justify-center py-14 sm:py-18 text-center px-4">
       <div
         ref={iconRef}
-        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-surface-overlay flex items-center justify-center mb-4"
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-surface-overlay/70 border border-border/60 flex items-center justify-center mb-4"
         style={{ willChange: "transform" }}
       >
         <Icon
@@ -183,7 +190,9 @@ export function StatCard({ label, value, sublabel, className = "" }) {
   }, [value]);
 
   return (
-    <div className={`card px-4 sm:px-5 py-4 sm:py-5 group transition-shadow ${className}`.trim()}>
+    <div
+      className={`card px-4 sm:px-5 py-4 sm:py-5 group transition-shadow ${className}`.trim()}
+    >
       <p className="text-xs sm:text-label text-text-tertiary uppercase tracking-widest">
         {label}
       </p>

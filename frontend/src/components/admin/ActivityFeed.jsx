@@ -31,10 +31,10 @@ export default function ActivityFeed({ items, isLoading, error, onRetry }) {
   if (isLoading) {
     return (
       <div className="card p-6 animate-pulse">
-        <div className="h-4 w-40 bg-surface-overlay rounded mb-4" />
+        <div className="h-4 w-40 bg-surface-overlay/55 rounded mb-4" />
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-10 bg-surface-overlay rounded" />
+            <div key={i} className="h-10 bg-surface-overlay/55 rounded" />
           ))}
         </div>
       </div>

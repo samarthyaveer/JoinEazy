@@ -28,7 +28,9 @@ function AppRoutes() {
   }
 
   const authRedirect = user ? (
-    <Navigate to={user.role === "admin" ? "/admin/assignments" : "/dashboard"} />
+    <Navigate
+      to={user.role === "admin" ? "/admin/assignments" : "/dashboard"}
+    />
   ) : null;
 
   return (
@@ -38,7 +40,9 @@ function AppRoutes() {
         <Route path="/login" element={authRedirect || <AuthPage />} />
         <Route
           path="/register"
-          element={authRedirect || <Navigate to="/login?mode=register" replace />}
+          element={
+            authRedirect || <Navigate to="/login?mode=register" replace />
+          }
         />
 
         {/* Student routes */}

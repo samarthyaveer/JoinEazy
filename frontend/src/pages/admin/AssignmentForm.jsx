@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import PageShell from "@/components/layout/PageShell";
-import { Spinner } from "@/components/common/UIComponents";
+import BubbleLoader from "@/components/BubbleLoader";
 import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 import { useMagnetic } from "@/hooks/useGsap";
 import { adminApi } from "@/services/api";
@@ -96,13 +96,7 @@ export default function AssignmentForm() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   if (loading) {
-    return (
-      <PageShell title="Assignment form">
-        <div className="flex justify-center py-20">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   return (

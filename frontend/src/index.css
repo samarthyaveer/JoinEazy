@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Caudex:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Caudex:wght@400;700&display=swap");
 
 /* Geist Sans — Variable */
 @font-face {
-  font-family: 'Geist Sans';
-  src: url('/fonts/Geist-Variable.woff2') format('woff2');
+  font-family: "Geist Sans";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -11,8 +11,8 @@
 
 /* Geist Mono — Variable */
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -25,72 +25,106 @@
 @layer base {
   :root {
     color-scheme: light;
-    --color-surface: 248 246 242;
-    --color-surface-raised: 255 253 249;
-    --color-surface-overlay: 242 237 230;
-    --color-surface-hover: 234 228 220;
-    --color-accent: 0 122 255;
-    --color-accent-hover: 0 102 214;
-    --color-text-primary: 43 39 36;
-    --color-text-secondary: 101 95 89;
-    --color-text-tertiary: 136 129 122;
+    --font-sans: "Geist Sans", "Satoshi", "Work Sans", ui-sans-serif;
+    --font-display: "Caudex", "Palatino Linotype", "Book Antiqua", serif;
+    --font-mono:
+      "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+      monospace;
+    --color-surface: 232 236 242;
+    --color-surface-raised: 246 248 252;
+    --color-surface-overlay: 255 255 255;
+    --color-surface-hover: 236 242 250;
+    --color-accent: 41 124 255;
+    --color-accent-hover: 68 144 255;
+    --color-text-primary: 18 28 44;
+    --color-text-secondary: 74 86 105;
+    --color-text-tertiary: 120 131 148;
     --color-text-inverse: 255 255 255;
-    --color-border: 120 111 101;
-    --color-border-subtle: 176 166 154;
-    --color-border-strong: 144 133 121;
-    --color-semantic-success: 52 199 89;
-    --color-semantic-warning: 255 159 10;
-    --color-semantic-danger: 255 69 58;
-    --button-primary-bg: 43 39 36;
-    --button-primary-hover: 64 58 53;
+    --color-border: 84 102 130;
+    --color-border-subtle: 170 184 206;
+    --color-border-strong: 100 118 146;
+    --color-semantic-success: 22 163 74;
+    --color-semantic-warning: 245 158 11;
+    --color-semantic-danger: 239 68 68;
+    --button-primary-bg: 41 124 255;
+    --button-primary-hover: 68 144 255;
     --button-primary-text: 255 255 255;
-    --button-secondary-bg: 255 253 249;
-    --button-secondary-hover: 243 239 232;
-    --button-secondary-text: 43 39 36;
-    --button-secondary-border: 176 166 154;
-    --input-bg: 255 253 249;
-    --input-border: 191 182 171;
-    --input-hover: 152 141 129;
-    --input-ring: 0 122 255;
-    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 40px rgba(15, 23, 42, 0.04);
-    --shadow-card-hover: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 48px rgba(15, 23, 42, 0.08);
-    --shadow-modal: 0 24px 80px rgba(15, 23, 42, 0.18), 0 8px 24px rgba(15, 23, 42, 0.08);
-    --shadow-button: 0 1px 2px rgba(15, 23, 42, 0.08), 0 6px 16px rgba(15, 23, 42, 0.08);
+    --button-secondary-bg: 255 255 255;
+    --button-secondary-hover: 241 245 249;
+    --button-secondary-text: 18 28 44;
+    --button-secondary-border: 190 204 224;
+    --input-bg: 255 255 255;
+    --input-border: 190 204 224;
+    --input-hover: 136 154 176;
+    --input-ring: 41 124 255;
+    --glass-bg: 255 255 255;
+    --glass-bg-strong: 255 255 255;
+    --glass-border: 255 255 255;
+    --glass-highlight: 255 255 255;
+    --progress-good-start: 16 185 129;
+    --progress-good-end: 59 130 246;
+    --progress-mid-start: 245 158 11;
+    --progress-mid-end: 250 204 21;
+    --progress-low-start: 239 68 68;
+    --progress-low-end: 248 113 113;
+    --shadow-card:
+      0 20px 50px rgba(15, 23, 42, 0.12), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+    --shadow-card-hover:
+      0 26px 70px rgba(15, 23, 42, 0.16), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    --shadow-modal:
+      0 40px 120px rgba(15, 23, 42, 0.24),
+      0 1px 0 rgba(255, 255, 255, 0.7) inset;
+    --shadow-button:
+      0 14px 30px rgba(15, 23, 42, 0.16), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
   }
 
   .dark {
     color-scheme: dark;
-    --color-surface: 9 11 16;
-    --color-surface-raised: 17 21 28;
-    --color-surface-overlay: 28 34 44;
-    --color-surface-hover: 37 45 58;
-    --color-accent: 72 169 255;
-    --color-accent-hover: 99 183 255;
-    --color-text-primary: 245 247 250;
-    --color-text-secondary: 189 196 206;
-    --color-text-tertiary: 141 151 164;
-    --color-text-inverse: 9 11 16;
-    --color-border: 148 163 184;
-    --color-border-subtle: 100 116 139;
+    --color-surface: 6 10 18;
+    --color-surface-raised: 12 18 28;
+    --color-surface-overlay: 18 26 40;
+    --color-surface-hover: 26 36 52;
+    --color-accent: 96 199 255;
+    --color-accent-hover: 124 212 255;
+    --color-text-primary: 241 245 249;
+    --color-text-secondary: 171 182 199;
+    --color-text-tertiary: 123 136 158;
+    --color-text-inverse: 8 12 20;
+    --color-border: 120 140 166;
+    --color-border-subtle: 86 102 128;
     --color-border-strong: 148 163 184;
-    --color-semantic-success: 80 227 117;
-    --color-semantic-warning: 255 179 64;
-    --color-semantic-danger: 255 105 97;
-    --button-primary-bg: 245 247 250;
-    --button-primary-hover: 224 228 235;
-    --button-primary-text: 17 21 28;
-    --button-secondary-bg: 24 30 39;
-    --button-secondary-hover: 33 41 54;
-    --button-secondary-text: 245 247 250;
-    --button-secondary-border: 71 85 105;
-    --input-bg: 15 20 28;
-    --input-border: 71 85 105;
-    --input-hover: 96 111 132;
-    --input-ring: 72 169 255;
-    --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.36), 0 20px 56px rgba(0, 0, 0, 0.26);
-    --shadow-card-hover: 0 1px 1px rgba(0, 0, 0, 0.38), 0 24px 64px rgba(0, 0, 0, 0.32);
-    --shadow-modal: 0 30px 90px rgba(0, 0, 0, 0.52), 0 10px 28px rgba(0, 0, 0, 0.28);
-    --shadow-button: 0 1px 1px rgba(0, 0, 0, 0.32), 0 10px 28px rgba(0, 0, 0, 0.22);
+    --color-semantic-success: 34 197 94;
+    --color-semantic-warning: 250 204 21;
+    --color-semantic-danger: 248 113 113;
+    --button-primary-bg: 96 199 255;
+    --button-primary-hover: 124 212 255;
+    --button-primary-text: 8 12 20;
+    --button-secondary-bg: 20 28 42;
+    --button-secondary-hover: 28 38 56;
+    --button-secondary-text: 241 245 249;
+    --button-secondary-border: 86 102 128;
+    --input-bg: 16 24 36;
+    --input-border: 86 102 128;
+    --input-hover: 120 140 166;
+    --input-ring: 96 199 255;
+    --glass-bg: 16 24 36;
+    --glass-bg-strong: 20 28 42;
+    --glass-border: 255 255 255;
+    --glass-highlight: 255 255 255;
+    --progress-good-start: 34 197 94;
+    --progress-good-end: 56 189 248;
+    --progress-mid-start: 250 204 21;
+    --progress-mid-end: 251 146 60;
+    --progress-low-start: 248 113 113;
+    --progress-low-end: 239 68 68;
+    --shadow-card:
+      0 24px 60px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    --shadow-card-hover:
+      0 30px 80px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    --shadow-modal:
+      0 40px 120px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    --shadow-button:
+      0 18px 40px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
   }
 
   html {
@@ -99,7 +133,7 @@
 
   body {
     @apply bg-surface text-text-primary antialiased;
-    font-family: 'Caudex', Georgia, Cambria, "Times New Roman", serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     line-height: 1.72;
     -webkit-font-smoothing: antialiased;
@@ -108,12 +142,41 @@
     touch-action: manipulation;
     min-height: 100vh;
     background-image:
-      radial-gradient(circle at top, rgb(var(--color-accent) / 0.08), transparent 34%),
-      linear-gradient(180deg, rgb(var(--color-surface-raised) / 0.96), rgb(var(--color-surface) / 1));
+      radial-gradient(
+        circle at 12% 10%,
+        rgb(var(--color-accent) / 0.18),
+        transparent 42%
+      ),
+      radial-gradient(
+        circle at 80% 0%,
+        rgb(var(--color-semantic-success) / 0.12),
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at 60% 100%,
+        rgb(var(--color-accent) / 0.12),
+        transparent 50%
+      ),
+      linear-gradient(
+        180deg,
+        rgb(var(--color-surface-raised) / 0.9),
+        rgb(var(--color-surface) / 1)
+      );
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display,
+  .text-hero,
+  .text-page,
+  .text-section {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   * {
-    border-color: rgb(var(--color-border) / 0.08);
+    border-color: rgb(var(--color-border) / 0.16);
   }
 
   ::-webkit-scrollbar {
@@ -126,7 +189,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgb(var(--color-text-tertiary) / 0.28);
+    background: rgb(var(--color-text-tertiary) / 0.35);
     border-radius: 999px;
   }
 
@@ -135,7 +198,7 @@
   }
 
   ::selection {
-    background: rgb(var(--color-accent) / 0.18);
+    background: rgb(var(--color-accent) / 0.22);
     color: rgb(var(--color-text-primary));
   }
 }
@@ -147,7 +210,11 @@
     padding: 0 20px;
     font-size: 14px;
     letter-spacing: -0.015em;
-    border-radius: 14px;
+    white-space: nowrap;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    backdrop-filter: blur(12px) saturate(135%);
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
     transition:
       background-color 180ms ease,
       border-color 180ms ease,
@@ -166,12 +233,21 @@
   .btn-primary {
     @apply btn;
     color: rgb(var(--button-primary-text));
-    background: rgb(var(--button-primary-bg));
+    background: linear-gradient(
+      135deg,
+      rgb(var(--button-primary-bg) / 0.95),
+      rgb(var(--button-primary-hover) / 0.85)
+    );
+    border-color: rgb(var(--color-accent) / 0.4);
     box-shadow: var(--shadow-button);
   }
 
   .btn-primary:hover {
-    background: rgb(var(--button-primary-hover));
+    background: linear-gradient(
+      135deg,
+      rgb(var(--button-primary-hover) / 0.96),
+      rgb(var(--color-accent) / 0.92)
+    );
     box-shadow: var(--shadow-card);
   }
 
@@ -181,12 +257,21 @@
 
   .btn-accent {
     @apply btn text-text-inverse;
-    background: rgb(var(--color-accent));
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-accent) / 0.95),
+      rgb(var(--color-accent-hover) / 0.85)
+    );
+    border-color: rgb(var(--color-accent) / 0.4);
     box-shadow: var(--shadow-button);
   }
 
   .btn-accent:hover {
-    background: rgb(var(--color-accent-hover));
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-accent-hover) / 0.96),
+      rgb(var(--color-accent) / 0.9)
+    );
     box-shadow: 0 10px 24px rgb(var(--color-accent) / 0.24);
   }
 
@@ -197,14 +282,22 @@
   .btn-secondary {
     @apply btn;
     color: rgb(var(--button-secondary-text));
-    background: rgb(var(--button-secondary-bg) / 0.9);
-    border: 1px solid rgb(var(--button-secondary-border) / 0.28);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--button-secondary-bg) / 0.7),
+      rgb(var(--button-secondary-bg) / 0.4)
+    );
+    border: 1px solid rgb(var(--button-secondary-border) / 0.4);
+    box-shadow: var(--shadow-button);
   }
 
   .btn-secondary:hover {
-    background: rgb(var(--button-secondary-hover) / 0.96);
-    border-color: rgb(var(--button-secondary-border) / 0.38);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--button-secondary-hover) / 0.8),
+      rgb(var(--button-secondary-hover) / 0.5)
+    );
+    border-color: rgb(var(--button-secondary-border) / 0.5);
   }
 
   .btn-secondary:active {
@@ -213,7 +306,11 @@
 
   .btn-danger {
     @apply btn text-semantic-danger border border-semantic-danger/20;
-    background: rgb(var(--color-semantic-danger) / 0.08);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-semantic-danger) / 0.16),
+      rgb(var(--color-semantic-danger) / 0.08)
+    );
   }
 
   .btn-danger:hover {
@@ -231,7 +328,7 @@
 
   .btn-ghost:hover {
     @apply text-text-primary;
-    background: rgb(var(--color-text-primary) / 0.05);
+    background: rgb(var(--color-text-primary) / 0.06);
   }
 
   .btn-ghost:active {
@@ -240,9 +337,15 @@
 
   .input-field {
     @apply w-full text-text-primary rounded-xl transition-all duration-200 placeholder:text-text-tertiary focus:outline-none;
-    background: rgb(var(--input-bg) / 0.96);
-    border: 1px solid rgb(var(--input-border) / 0.6);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    background: linear-gradient(
+      140deg,
+      rgb(var(--glass-bg) / 0.78),
+      rgb(var(--glass-bg) / 0.46)
+    );
+    border: 1px solid rgb(var(--input-border) / 0.45);
+    box-shadow: inset 0 1px 0 rgb(var(--glass-highlight) / 0.35);
+    backdrop-filter: blur(12px) saturate(135%);
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
     min-height: 44px;
     padding: 0 16px;
     font-size: 14px;
@@ -254,7 +357,7 @@
 
   .input-field:focus {
     border-color: rgb(var(--input-ring));
-    box-shadow: 0 0 0 4px rgb(var(--input-ring) / 0.12);
+    box-shadow: 0 0 0 4px rgb(var(--input-ring) / 0.18);
   }
 
   textarea.input-field {
@@ -265,13 +368,66 @@
   .card {
     @apply bg-surface-raised border border-border;
     border-radius: 24px;
+    background: linear-gradient(
+      140deg,
+      rgb(var(--glass-bg-strong) / 0.75),
+      rgb(var(--glass-bg) / 0.4)
+    );
+    border: 1px solid rgb(var(--glass-border) / 0.28);
     box-shadow: var(--shadow-card);
-    transition: box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    transition:
+      box-shadow 220ms ease,
+      border-color 220ms ease,
+      background-color 220ms ease;
   }
 
   .card:hover {
     box-shadow: var(--shadow-card-hover);
-    border-color: rgb(var(--color-border-strong) / 0.2);
+    border-color: rgb(var(--glass-border) / 0.45);
+  }
+
+  .progress-track {
+    height: 0.45rem;
+    border-radius: 999px;
+    background: rgb(var(--glass-bg) / 0.35);
+    border: 1px solid rgb(var(--glass-border) / 0.28);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgb(var(--glass-highlight) / 0.35);
+    backdrop-filter: blur(10px) saturate(135%);
+    -webkit-backdrop-filter: blur(10px) saturate(135%);
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    transition: width 300ms ease;
+  }
+
+  .progress-good {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--progress-good-start) / 0.95),
+      rgb(var(--progress-good-end) / 0.95)
+    );
+  }
+
+  .progress-mid {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--progress-mid-start) / 0.95),
+      rgb(var(--progress-mid-end) / 0.95)
+    );
+  }
+
+  .progress-low {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--progress-low-start) / 0.95),
+      rgb(var(--progress-low-end) / 0.95)
+    );
   }
 
   .badge {
@@ -279,33 +435,35 @@
     padding: 5px 12px;
     font-size: 11px;
     letter-spacing: 0.03em;
+    backdrop-filter: blur(10px) saturate(135%);
+    -webkit-backdrop-filter: blur(10px) saturate(135%);
   }
 
   .badge-success {
     @apply badge;
     color: rgb(var(--color-semantic-success));
-    background: rgb(var(--color-semantic-success) / 0.11);
-    border: 1px solid rgb(var(--color-semantic-success) / 0.18);
+    background: rgb(var(--color-semantic-success) / 0.16);
+    border: 1px solid rgb(var(--color-semantic-success) / 0.3);
   }
 
   .badge-warning {
     @apply badge;
     color: rgb(var(--color-semantic-warning));
-    background: rgb(var(--color-semantic-warning) / 0.11);
-    border: 1px solid rgb(var(--color-semantic-warning) / 0.2);
+    background: rgb(var(--color-semantic-warning) / 0.16);
+    border: 1px solid rgb(var(--color-semantic-warning) / 0.3);
   }
 
   .badge-danger {
     @apply badge;
     color: rgb(var(--color-semantic-danger));
-    background: rgb(var(--color-semantic-danger) / 0.11);
-    border: 1px solid rgb(var(--color-semantic-danger) / 0.18);
+    background: rgb(var(--color-semantic-danger) / 0.16);
+    border: 1px solid rgb(var(--color-semantic-danger) / 0.3);
   }
 
   .badge-neutral {
     @apply badge text-text-secondary;
-    background: rgb(var(--color-text-secondary) / 0.08);
-    border: 1px solid rgb(var(--color-border) / 0.1);
+    background: rgb(var(--glass-bg) / 0.5);
+    border: 1px solid rgb(var(--glass-border) / 0.25);
   }
 
   .noise-overlay {
@@ -313,7 +471,7 @@
     inset: 0;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.01;
+    opacity: 0.03;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 128px 128px;
@@ -322,10 +480,10 @@
   .gradient-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(96px);
+    filter: blur(120px);
     pointer-events: none;
     will-change: transform;
-    opacity: 0.72;
+    opacity: 0.65;
   }
 
   .content-auto {
@@ -381,5 +539,21 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

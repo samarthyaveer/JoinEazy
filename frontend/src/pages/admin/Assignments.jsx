@@ -10,12 +10,8 @@ import Copy from "lucide-react/dist/esm/icons/copy";
 import CalendarClock from "lucide-react/dist/esm/icons/calendar-clock";
 import Users from "lucide-react/dist/esm/icons/users";
 import PageShell from "@/components/layout/PageShell";
-import {
-  EmptyState,
-  Spinner,
-  ProgressBar,
-  StatCard,
-} from "@/components/common/UIComponents";
+import BubbleLoader from "@/components/BubbleLoader";
+import { EmptyState, StatCard } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
 import { useStagger } from "@/hooks/useGsap";
 import { adminApi } from "@/services/api";
@@ -144,16 +140,7 @@ export default function AdminAssignments() {
   }, [assignments]);
 
   if (loading) {
-    return (
-      <PageShell
-        title="Assignments"
-        subtitle="Loading your professor workspace"
-      >
-        <div className="flex justify-center py-24">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   if (error) {
@@ -252,7 +239,7 @@ export default function AdminAssignments() {
       ) : (
         <div
           ref={cardsRef}
-          className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4"
         >
           {filteredAssignments.map((assignment) => {
             const dueDate = new Date(assignment.due_date);
@@ -263,12 +250,12 @@ export default function AdminAssignments() {
               <article
                 key={assignment.id}
                 data-assignment-card
-                className="card p-4 sm:p-5 lg:p-6"
+                className="card p-4 sm:p-4 lg:p-5"
               >
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span
                           className={`badge ${isPastDue ? "badge-danger" : "badge-neutral"}`}
                         >
@@ -281,7 +268,7 @@ export default function AdminAssignments() {
                       <h2 className="text-section text-text-primary leading-tight">
                         {assignment.title}
                       </h2>
-                      <p className="text-body text-text-secondary mt-2">
+                      <p className="text-body text-text-secondary mt-1 line-clamp-2">
                         {assignment.description ||
                           "No extra instructions yet. Open the assignment to refine the brief."}
                       </p>
@@ -341,40 +328,7 @@ export default function AdminAssignments() {
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] border border-border bg-surface-raised/80 p-4 sm:p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-meta font-semibold text-text-primary">
-                          Submission progress
-                        </p>
-                        <p className="text-meta text-text-secondary mt-1">
-                          A quick read on how close this assignment is to
-                          completion.
-                        </p>
-                      </div>
-                      <span className="text-label text-text-tertiary">
-                        {submissionRate}%
-                      </span>
-                    </div>
-                    <div className="mt-4">
-                      <ProgressBar
-                        value={assignment.submitted_count}
-                        max={Math.max(assignment.total_submissions, 1)}
-                      />
-                    </div>
-                  </div>
-
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/assignments/${assignment.id}/edit`)
-                      }
-                      className="btn-secondary btn-sm"
-                    >
-                      <Pencil size={14} aria-hidden="true" />
-                      Edit details
-                    </button>
-
                     <a
                       href={assignment.onedrive_link}
                       target="_blank"

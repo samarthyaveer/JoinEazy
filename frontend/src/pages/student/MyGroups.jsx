@@ -4,10 +4,10 @@ import Users from "lucide-react/dist/esm/icons/users";
 import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
 import CalendarClock from "lucide-react/dist/esm/icons/calendar-clock";
 import PageShell from "@/components/layout/PageShell";
+import BubbleLoader from "@/components/BubbleLoader";
 import {
   StatusBadge,
   EmptyState,
-  Spinner,
   ProgressBar,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
@@ -49,13 +49,7 @@ export default function MyGroups() {
   }, [loadGroups]);
 
   if (loading) {
-    return (
-      <PageShell title="My groups" subtitle="Loading your teams">
-        <div className="flex justify-center py-24">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   if (error) {

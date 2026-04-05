@@ -17,7 +17,7 @@ export default function QuickGradeCard({
         Start with the oldest ungraded submission.
       </p>
 
-      <div className="mt-5 p-4 rounded-xl border border-border bg-surface-overlay/40 flex items-center justify-between gap-4">
+      <div className="mt-5 p-4 rounded-xl border border-border/60 bg-surface-overlay/55 flex items-center justify-between gap-4">
         <div>
           <p className="text-body font-medium text-text-primary">
             {oldestSubmission.studentName}

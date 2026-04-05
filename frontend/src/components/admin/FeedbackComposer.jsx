@@ -63,7 +63,7 @@ export default function FeedbackComposer({ submissionId, value, onChange }) {
 
       {preview ? (
         <div
-          className="min-h-[120px] border border-border rounded-xl p-3 text-sm text-text-primary bg-surface-raised"
+          className="min-h-[120px] border border-border/60 rounded-xl p-3 text-sm text-text-primary bg-surface-overlay/50"
           dangerouslySetInnerHTML={{
             __html: previewHtml || "<p>Nothing to preview yet.</p>",
           }}

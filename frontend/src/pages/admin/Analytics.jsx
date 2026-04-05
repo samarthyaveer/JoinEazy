@@ -23,12 +23,8 @@ import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
 import PageShell from "@/components/layout/PageShell";
 import Modal from "@/components/common/Modal";
 import ErrorBanner from "@/components/common/ErrorBanner";
-import {
-  RagDot,
-  StatCard,
-  EmptyState,
-  Spinner,
-} from "@/components/common/UIComponents";
+import BubbleLoader from "@/components/BubbleLoader";
+import { RagDot, StatCard, EmptyState } from "@/components/common/UIComponents";
 import { adminApi } from "@/services/api";
 
 // ─── Chart theme ───────────────────────────────────────────────────────────────
@@ -394,13 +390,7 @@ export default function Analytics() {
 
   // ─── Loading / error states ──────────────────────────────────────────────────
   if (loading) {
-    return (
-      <PageShell title="Insights">
-        <div className="flex justify-center py-20">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   if (error) {
@@ -493,8 +483,8 @@ export default function Analytics() {
         {groups.length === 0 ? (
           <EmptyState icon={Users} title="No groups yet" />
         ) : (
-          <div className="card overflow-hidden mb-8">
-            <table className="w-full">
+          <div className="card overflow-x-auto mb-8">
+            <table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-b border-border bg-surface-overlay/50">
                   <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">
@@ -663,8 +653,8 @@ export default function Analytics() {
           </div>
 
           {/* Stats table */}
-          <div className="card overflow-hidden">
-            <table className="w-full">
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-border bg-surface-overlay/50">
                   <th className="text-left px-5 py-3 text-label text-text-tertiary uppercase tracking-widest">

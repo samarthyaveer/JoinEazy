@@ -11,6 +11,7 @@ import ErrorBanner from "@/components/common/ErrorBanner";
 import EmptyState from "@/components/common/EmptyState";
 import Modal from "@/components/common/Modal";
 import FeedbackComposer from "@/components/admin/FeedbackComposer";
+import BubbleLoader from "@/components/BubbleLoader";
 import { getSubmissionDetail, publishGrade, saveGrade } from "@/services/api";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
 import { timeAgo } from "@/utils/time";
@@ -301,6 +302,10 @@ export default function SubmissionDetail() {
     return () => window.removeEventListener("keydown", handler);
   }, [assignmentId, handleSaveGrade, navigate, nextId, prevId, submissionIds]);
 
+  if (isLoading) {
+    return <BubbleLoader />;
+  }
+
   return (
     <PageShell
       title="Review submission"
@@ -347,12 +352,7 @@ export default function SubmissionDetail() {
         </div>
       }
     >
-      {isLoading ? (
-        <div className="card p-6 animate-pulse">
-          <div className="h-4 w-40 bg-surface-overlay rounded mb-4" />
-          <div className="h-28 bg-surface-overlay rounded" />
-        </div>
-      ) : error ? (
+      {error ? (
         <ErrorBanner message={error} onRetry={fetchDetail} />
       ) : !submission ? (
         <EmptyState

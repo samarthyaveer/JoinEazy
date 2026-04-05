@@ -68,8 +68,10 @@ export default function Modal({
       ref={overlayRef}
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 sm:p-6"
       style={{
-        background: "rgb(2 6 23 / 0.34)",
-        backdropFilter: "blur(10px)",
+        background:
+          "linear-gradient(180deg, rgb(4 8 18 / 0.52), rgb(4 8 18 / 0.68))",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
         overscrollBehavior: "contain",
       }}
       onClick={handleOverlayClick}
@@ -78,9 +80,12 @@ export default function Modal({
         ref={modalRef}
         className={`w-full ${sizeClasses[size]} rounded-[28px] shadow-modal overflow-hidden max-h-[calc(100vh-1.5rem)] sm:max-h-[min(88vh,820px)]`}
         style={{
-          background: "rgb(var(--color-surface-raised) / 0.96)",
-          border: "1px solid rgb(var(--color-border) / 0.12)",
+          background:
+            "linear-gradient(145deg, rgb(var(--glass-bg-strong) / 0.9), rgb(var(--glass-bg) / 0.55))",
+          border: "1px solid rgb(var(--glass-border) / 0.35)",
           boxShadow: "var(--shadow-modal)",
+          backdropFilter: "blur(18px) saturate(140%)",
+          WebkitBackdropFilter: "blur(18px) saturate(140%)",
         }}
       >
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-border">

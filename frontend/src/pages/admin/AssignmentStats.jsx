@@ -19,6 +19,7 @@ import ClipboardList from "lucide-react/dist/esm/icons/clipboard-list";
 import PageShell from "@/components/layout/PageShell";
 import ErrorBanner from "@/components/common/ErrorBanner";
 import EmptyState from "@/components/common/EmptyState";
+import BubbleLoader from "@/components/BubbleLoader";
 import { getAssignmentStats } from "@/services/api";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
 
@@ -478,6 +479,10 @@ export default function AssignmentStats() {
 
   const title = stats?.assignment?.title || "Assignment insights";
 
+  if (isLoading) {
+    return <BubbleLoader />;
+  }
+
   return (
     <PageShell
       title={title}
@@ -506,16 +511,7 @@ export default function AssignmentStats() {
         </div>
       }
     >
-      {isLoading ? (
-        <div className="space-y-4 animate-pulse">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="card h-28 bg-surface-overlay" />
-            ))}
-          </div>
-          <div className="card h-64 bg-surface-overlay" />
-        </div>
-      ) : error ? (
+      {error ? (
         <ErrorBanner message={error} onRetry={fetchStats} />
       ) : !stats ? (
         <EmptyState

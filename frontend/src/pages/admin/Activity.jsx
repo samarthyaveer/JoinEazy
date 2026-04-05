@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import PageShell from "@/components/layout/PageShell";
 import ActivityFeed from "@/components/admin/ActivityFeed";
+import BubbleLoader from "@/components/BubbleLoader";
 import { getActivityFeed } from "@/services/api";
 
 export default function AdminActivity() {
@@ -28,6 +29,10 @@ export default function AdminActivity() {
   useEffect(() => {
     loadActivity();
   }, [loadActivity]);
+
+  if (isLoading) {
+    return <BubbleLoader />;
+  }
 
   return (
     <PageShell

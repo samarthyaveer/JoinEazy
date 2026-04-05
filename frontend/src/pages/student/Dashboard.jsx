@@ -4,11 +4,11 @@ import Calendar from "lucide-react/dist/esm/icons/calendar";
 import Users from "lucide-react/dist/esm/icons/users";
 import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 import PageShell from "@/components/layout/PageShell";
+import BubbleLoader from "@/components/BubbleLoader";
 import {
   StatusBadge,
   StatCard,
   EmptyState,
-  Spinner,
 } from "@/components/common/UIComponents";
 import { useStagger } from "@/hooks/useGsap";
 import { studentApi } from "@/services/api";
@@ -51,13 +51,7 @@ export default function StudentDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <PageShell title="Overview">
-        <div className="flex justify-center py-20">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   const upcoming = assignments

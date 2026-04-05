@@ -5,11 +5,10 @@ import CalendarClock from "lucide-react/dist/esm/icons/calendar-clock";
 import Users from "lucide-react/dist/esm/icons/users";
 import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
 import PageShell from "@/components/layout/PageShell";
+import BubbleLoader from "@/components/BubbleLoader";
 import {
   StatusBadge,
   EmptyState,
-  Spinner,
-  ProgressBar,
   StatCard,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
@@ -149,13 +148,7 @@ export default function StudentAssignments() {
   }, [assignments]);
 
   if (loading) {
-    return (
-      <PageShell title="Assignments" subtitle="Loading your coursework">
-        <div className="flex justify-center py-24">
-          <Spinner />
-        </div>
-      </PageShell>
-    );
+    return <BubbleLoader />;
   }
 
   if (error) {
@@ -191,26 +184,24 @@ export default function StudentAssignments() {
       ) : (
         <div
           ref={cardsRef}
-          className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4"
         >
           {assignments.map((assignment) => {
             const state = getAssignmentState(assignment);
             const isPastDue = new Date(assignment.due_date) < new Date();
             const daysUntil = getDaysUntil(assignment.due_date);
             const memberCount = assignment.my_group?.member_count || 0;
-            const submittedMembers =
-              assignment.my_group?.submitted_members || 0;
 
             return (
               <article
                 key={assignment.id}
                 data-assignment-card
-                className="card p-4 sm:p-5 lg:p-6 content-auto"
+                className="card p-4 sm:p-4 lg:p-5 content-auto"
               >
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         <StatusBadge status={state.badge} />
                         {isPastDue ? (
                           <span className="badge-danger">Past due</span>
@@ -219,7 +210,7 @@ export default function StudentAssignments() {
                       <h2 className="text-section text-text-primary leading-tight">
                         {assignment.title}
                       </h2>
-                      <p className="text-body text-text-secondary mt-2">
+                      <p className="text-body text-text-secondary mt-1 line-clamp-2">
                         {assignment.description ||
                           "Open the assignment to review the instructions and submission steps."}
                       </p>
@@ -240,7 +231,7 @@ export default function StudentAssignments() {
                         <p className="text-meta font-semibold text-text-primary">
                           {state.title}
                         </p>
-                        <p className="text-meta text-text-secondary mt-1 max-w-2xl">
+                        <p className="text-meta text-text-secondary mt-1 max-w-2xl line-clamp-2">
                           {state.description}
                         </p>
                       </div>
@@ -265,7 +256,7 @@ export default function StudentAssignments() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
                       <div className="flex items-center gap-2 text-label uppercase tracking-widest text-text-tertiary">
                         <Users size={14} aria-hidden="true" />
@@ -279,31 +270,6 @@ export default function StudentAssignments() {
                           ? `${memberCount}/${assignment.max_group_size} members joined`
                           : `Up to ${assignment.max_group_size} members`}
                       </p>
-                    </div>
-
-                    <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
-                      <p className="text-label uppercase tracking-widest text-text-tertiary">
-                        Team progress
-                      </p>
-                      {assignment.my_group ? (
-                        <>
-                          <div className="mt-3">
-                            <ProgressBar
-                              value={submittedMembers}
-                              max={Math.max(memberCount, 1)}
-                            />
-                          </div>
-                          <p className="text-meta text-text-secondary mt-2">
-                            {submittedMembers} of {memberCount} members have
-                            completed their submission steps.
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-meta text-text-secondary mt-3">
-                          Once you form a group, this card tracks who has
-                          uploaded and confirmed.
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
