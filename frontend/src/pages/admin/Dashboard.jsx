@@ -8,6 +8,7 @@ import ActivityFeed from "@/components/admin/ActivityFeed";
 import QuickGradeCard from "@/components/admin/QuickGradeCard";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorBanner from "@/components/common/ErrorBanner";
+import { usePageReady } from "@/context/InitialLoadContext";
 import { adminApi, getActivityFeed, getPendingReviewCount } from "@/services/api";
 
 const dateFmt = new Intl.DateTimeFormat("en-IN", {
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [activityError, setActivityError] = useState(null);
+  usePageReady(!loading);
 
   // ── Dashboard data ──────────────────────────────────────────────────────────
   const loadDashboard = useCallback(async () => {

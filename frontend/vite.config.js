@@ -17,17 +17,18 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("react-router-dom") || id.includes("/react/") || id.includes("/react-dom/")) {
-            return "react-vendor";
-          }
-          if (id.includes("gsap")) {
-            return "motion";
-          }
-          if (id.includes("recharts")) {
-            return "charts";
-          }
-          if (id.includes("lucide-react")) {
-            return "icons";
+          if (id.includes("node_modules")) {
+            if (
+              id.includes("react") ||
+              id.includes("react-dom") ||
+              id.includes("react-router-dom")
+            ) {
+              return "vendor-react";
+            }
+            if (id.includes("recharts")) return "vendor-recharts";
+            if (id.includes("gsap")) return "vendor-gsap";
+            if (id.includes("lucide-react")) return "vendor-icons";
+            return "vendor";
           }
         },
       },

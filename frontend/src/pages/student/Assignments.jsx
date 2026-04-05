@@ -13,6 +13,7 @@ import {
   StatCard,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
+import { usePageReady } from "@/context/InitialLoadContext";
 import { useStagger } from "@/hooks/useGsap";
 import { studentApi } from "@/services/api";
 
@@ -98,6 +99,7 @@ export default function StudentAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  usePageReady(!loading);
 
   const cardsRef = useStagger({
     selector: "[data-assignment-card]",

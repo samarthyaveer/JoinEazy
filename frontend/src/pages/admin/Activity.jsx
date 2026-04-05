@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import PageShell from "@/components/layout/PageShell";
 import ActivityFeed from "@/components/admin/ActivityFeed";
 import { getActivityFeed } from "@/services/api";
+import { usePageReady } from "@/context/InitialLoadContext";
 
 export default function AdminActivity() {
   const [activity, setActivity] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  usePageReady(!isLoading);
 
   const loadActivity = useCallback(async () => {
     try {

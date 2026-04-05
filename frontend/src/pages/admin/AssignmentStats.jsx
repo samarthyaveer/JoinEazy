@@ -21,6 +21,7 @@ import ErrorBanner from "@/components/common/ErrorBanner";
 import EmptyState from "@/components/common/EmptyState";
 import { getAssignmentStats } from "@/services/api";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
+import { usePageReady } from "@/context/InitialLoadContext";
 
 // ─── Chart theme ───────────────────────────────────────────────────────────────
 const TOOLTIP_STYLE = {
@@ -362,6 +363,7 @@ export default function AssignmentStats() {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  usePageReady(!isLoading);
 
   const fetchStats = useCallback(async () => {
     if (!assignmentId) {

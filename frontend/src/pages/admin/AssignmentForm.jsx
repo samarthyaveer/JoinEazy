@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import PageShell from "@/components/layout/PageShell";
 import { Spinner } from "@/components/common/UIComponents";
+import { usePageReady } from "@/context/InitialLoadContext";
 import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 import { useMagnetic } from "@/hooks/useGsap";
 import { adminApi } from "@/services/api";
@@ -14,6 +15,7 @@ export default function AssignmentForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  usePageReady(!loading);
 
   const [form, setForm] = useState({
     title: "",

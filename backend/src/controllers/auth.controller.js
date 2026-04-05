@@ -1,11 +1,16 @@
-const authService = require('../services/auth.service');
-const { getCookieOptions, verifyToken } = require('../utils/token');
+const authService = require("../services/auth.service");
+const { getCookieOptions, verifyToken } = require("../utils/token");
 
 async function register(req, res, next) {
   try {
     const { fullName, email, password, role } = req.body;
-    const { user, token } = await authService.register({ fullName, email, password, role });
-    res.cookie('token', token, getCookieOptions());
+    const { user, token } = await authService.register({
+      fullName,
+      email,
+      password,
+      role,
+    });
+    res.cookie("token", token, getCookieOptions());
     res.status(201).json({ user });
   } catch (err) {
     next(err);
@@ -16,7 +21,7 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
     const { user, token } = await authService.login({ email, password });
-    res.cookie('token', token, getCookieOptions());
+    res.cookie("token", token, getCookieOptions());
     res.json({ user });
   } catch (err) {
     next(err);
@@ -24,8 +29,8 @@ async function login(req, res, next) {
 }
 
 async function logout(_req, res) {
-  res.clearCookie('token', { ...getCookieOptions(), maxAge: 0 });
-  res.json({ message: 'Logged out' });
+  res.clearCookie("token", { ...getCookieOptions(), maxAge: 0 });
+  res.json({ message: "Logged out" });
 }
 
 async function getMe(req, res, next) {

@@ -6,6 +6,7 @@ import {
   useCallback,
 } from "react";
 import { authApi } from "@/services/api";
+import { useInitialLoad } from "@/context/InitialLoadContext";
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { markStepReady } = useInitialLoad();
 
   const fetchUser = useCallback(async () => {
     try {
@@ -32,6 +34,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
+
+  useEffect(() => {
+    if (!loading) {
+      markStepReady("auth");
+    }
+  }, [loading, markStepReady]);
 
   /**
    * Logs a user in.

@@ -15,6 +15,7 @@ import {
   ProgressBar,
 } from "@/components/common/UIComponents";
 import { studentApi } from "@/services/api";
+import { usePageReady } from "@/context/InitialLoadContext";
 
 const STATUS_ORDER = [
   "pending",
@@ -105,6 +106,7 @@ export default function AssignmentView() {
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
+  usePageReady(!loading);
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupName, setGroupName] = useState("");

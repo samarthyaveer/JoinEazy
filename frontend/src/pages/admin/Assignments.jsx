@@ -17,6 +17,7 @@ import {
   StatCard,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
+import { usePageReady } from "@/context/InitialLoadContext";
 import { useStagger } from "@/hooks/useGsap";
 import { adminApi } from "@/services/api";
 
@@ -45,6 +46,7 @@ export default function AdminAssignments() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
+  usePageReady(!loading);
 
   const cardsRef = useStagger({
     selector: "[data-assignment-card]",

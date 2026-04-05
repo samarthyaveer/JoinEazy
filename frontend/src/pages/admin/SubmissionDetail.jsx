@@ -14,6 +14,7 @@ import FeedbackComposer from "@/components/admin/FeedbackComposer";
 import { getSubmissionDetail, publishGrade, saveGrade } from "@/services/api";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
 import { timeAgo } from "@/utils/time";
+import { usePageReady } from "@/context/InitialLoadContext";
 
 const dateTimeFmt = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -83,6 +84,7 @@ export default function SubmissionDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
+  usePageReady(!isLoading);
 
   const fetchDetail = useCallback(async () => {
     if (!submissionId) {

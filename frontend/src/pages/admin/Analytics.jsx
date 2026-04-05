@@ -30,6 +30,7 @@ import {
   Spinner,
 } from "@/components/common/UIComponents";
 import { adminApi } from "@/services/api";
+import { usePageReady } from "@/context/InitialLoadContext";
 
 // ─── Chart theme ───────────────────────────────────────────────────────────────
 const TOOLTIP_STYLE = {
@@ -320,6 +321,7 @@ export default function Analytics() {
   const [error, setError] = useState(null);
   const [evalModal, setEvalModal] = useState(INITIAL_MODAL);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  usePageReady(!loading);
 
   useEffect(() => {
     async function load() {
