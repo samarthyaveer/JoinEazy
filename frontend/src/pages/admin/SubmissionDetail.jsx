@@ -14,7 +14,6 @@ import FeedbackComposer from "@/components/admin/FeedbackComposer";
 import { getSubmissionDetail, publishGrade, saveGrade } from "@/services/api";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
 import { timeAgo } from "@/utils/time";
-import { usePageReady } from "@/context/InitialLoadContext";
 
 const dateTimeFmt = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -84,7 +83,6 @@ export default function SubmissionDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
-  usePageReady(!isLoading);
 
   const fetchDetail = useCallback(async () => {
     if (!submissionId) {
@@ -301,19 +299,14 @@ export default function SubmissionDetail() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [
-    assignmentId,
-    handleSaveGrade,
-    navigate,
-    nextId,
-    prevId,
-    submissionIds,
-  ]);
+  }, [assignmentId, handleSaveGrade, navigate, nextId, prevId, submissionIds]);
 
   return (
     <PageShell
       title="Review submission"
-      subtitle={submission?.assignmentTitle || "Grade and publish this group submission"}
+      subtitle={
+        submission?.assignmentTitle || "Grade and publish this group submission"
+      }
       action={
         <div className="flex flex-wrap items-center justify-center gap-2">
           <button onClick={() => navigate(-1)} className="btn-secondary btn-sm">
@@ -323,9 +316,12 @@ export default function SubmissionDetail() {
           <button
             onClick={() =>
               prevId &&
-              navigate(`/admin/assignments/${assignmentId}/submissions/${prevId}`, {
-                state: { submissionIds },
-              })
+              navigate(
+                `/admin/assignments/${assignmentId}/submissions/${prevId}`,
+                {
+                  state: { submissionIds },
+                },
+              )
             }
             className="btn-secondary btn-sm"
             disabled={!prevId}
@@ -335,9 +331,12 @@ export default function SubmissionDetail() {
           <button
             onClick={() =>
               nextId &&
-              navigate(`/admin/assignments/${assignmentId}/submissions/${nextId}`, {
-                state: { submissionIds },
-              })
+              navigate(
+                `/admin/assignments/${assignmentId}/submissions/${nextId}`,
+                {
+                  state: { submissionIds },
+                },
+              )
             }
             className="btn-secondary btn-sm"
             disabled={!nextId}
@@ -373,7 +372,8 @@ export default function SubmissionDetail() {
                         <span className="badge badge-warning">Late work</span>
                       ) : null}
                       <span className="badge badge-neutral">
-                        {submission.submittedMembers}/{submission.memberCount} members submitted
+                        {submission.submittedMembers}/{submission.memberCount}{" "}
+                        members submitted
                       </span>
                     </div>
                     <h2 className="mt-4 text-2xl font-semibold text-text-primary">
@@ -450,7 +450,9 @@ export default function SubmissionDetail() {
                     <Users size={18} aria-hidden="true" />
                   </div>
                   <div>
-                    <h3 className="text-section text-text-primary">Group roster</h3>
+                    <h3 className="text-section text-text-primary">
+                      Group roster
+                    </h3>
                     <p className="text-label text-text-tertiary mt-1">
                       Submission and review status for every member
                     </p>
@@ -508,7 +510,9 @@ export default function SubmissionDetail() {
                     <Clock3 size={18} aria-hidden="true" />
                   </div>
                   <div>
-                    <h3 className="text-section text-text-primary">Submission activity</h3>
+                    <h3 className="text-section text-text-primary">
+                      Submission activity
+                    </h3>
                     <p className="text-label text-text-tertiary mt-1">
                       Link open history for this group
                     </p>
@@ -561,7 +565,11 @@ export default function SubmissionDetail() {
                       {Number.isFinite(parsedTotalScore) ? parsedTotalScore : 0}
                       <span className="text-text-tertiary font-normal">
                         {" "}
-                        / {Number.isFinite(parsedTotalMarks) && parsedTotalMarks > 0 ? parsedTotalMarks : 100}
+                        /{" "}
+                        {Number.isFinite(parsedTotalMarks) &&
+                        parsedTotalMarks > 0
+                          ? parsedTotalMarks
+                          : 100}
                       </span>
                     </h3>
                     <p className="mt-2 text-meta text-text-secondary">
@@ -620,7 +628,11 @@ export default function SubmissionDetail() {
                   <div className="rounded-2xl border border-border bg-surface-overlay/35 p-4">
                     <SummaryRow
                       label="Visibility"
-                      value={submission.gradePublished ? "Published to students" : "Draft only"}
+                      value={
+                        submission.gradePublished
+                          ? "Published to students"
+                          : "Draft only"
+                      }
                     />
                     <SummaryRow
                       label="Group review"
@@ -632,7 +644,9 @@ export default function SubmissionDetail() {
                     />
                     <SummaryRow
                       label="Last saved"
-                      value={lastSavedAt ? timeAgo(lastSavedAt) : "Not saved yet"}
+                      value={
+                        lastSavedAt ? timeAgo(lastSavedAt) : "Not saved yet"
+                      }
                     />
                   </div>
                 </div>
@@ -663,7 +677,11 @@ export default function SubmissionDetail() {
                   className="btn-secondary"
                   disabled={isSaving}
                 >
-                  {isSaving ? "Saving draft..." : isDirty ? "Save draft" : "Draft saved"}
+                  {isSaving
+                    ? "Saving draft..."
+                    : isDirty
+                      ? "Save draft"
+                      : "Draft saved"}
                 </button>
                 <button
                   onClick={() => setShowPublish(true)}
@@ -683,8 +701,8 @@ export default function SubmissionDetail() {
             size="sm"
           >
             <p className="text-meta text-text-secondary">
-              Students will see the score, total marks, and written feedback once
-              you publish.
+              Students will see the score, total marks, and written feedback
+              once you publish.
             </p>
             <div className="mt-4 rounded-2xl border border-border bg-surface-overlay/45 p-4">
               <p className="text-body font-medium text-text-primary">

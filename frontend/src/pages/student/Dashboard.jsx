@@ -10,7 +10,6 @@ import {
   EmptyState,
   Spinner,
 } from "@/components/common/UIComponents";
-import { usePageReady } from "@/context/InitialLoadContext";
 import { useStagger } from "@/hooks/useGsap";
 import { studentApi } from "@/services/api";
 
@@ -18,7 +17,6 @@ export default function StudentDashboard() {
   const [groups, setGroups] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
-  usePageReady(!loading);
 
   const statsRef = useStagger({ stagger: 0.1, y: 30, delay: 0.15 });
   const upcomingRef = useStagger({

@@ -13,7 +13,6 @@ import {
   StatCard,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
-import { usePageReady } from "@/context/InitialLoadContext";
 import { useStagger } from "@/hooks/useGsap";
 import { studentApi } from "@/services/api";
 
@@ -40,13 +39,15 @@ function getAssignmentState(assignment) {
       ? {
           badge: "missing_deadline",
           title: "No group was created before the deadline",
-          description: "Open the assignment to review the brief and talk to your professor if you still need to submit.",
+          description:
+            "Open the assignment to review the brief and talk to your professor if you still need to submit.",
           cta: "Review assignment",
         }
       : {
           badge: "needs_group",
           title: "Create your group to unlock submission",
-          description: "Start with a group name, invite teammates, and the upload steps appear right away.",
+          description:
+            "Start with a group name, invite teammates, and the upload steps appear right away.",
           cta: "Create group",
         };
   }
@@ -64,7 +65,8 @@ function getAssignmentState(assignment) {
     return {
       badge: "submitted_waiting",
       title: "You finished your part",
-      description: "Your teammates still need to complete their confirmation steps.",
+      description:
+        "Your teammates still need to complete their confirmation steps.",
       cta: "Check progress",
     };
   }
@@ -73,7 +75,8 @@ function getAssignmentState(assignment) {
     return {
       badge: "awaiting_confirmation",
       title: "One final confirmation is left",
-      description: "Open the assignment and confirm the title to finish your submission.",
+      description:
+        "Open the assignment and confirm the title to finish your submission.",
       cta: "Confirm now",
     };
   }
@@ -82,7 +85,8 @@ function getAssignmentState(assignment) {
     return {
       badge: "link_visited",
       title: "Upload started",
-      description: "Your group has opened the folder. Mark the upload complete once the files are in place.",
+      description:
+        "Your group has opened the folder. Mark the upload complete once the files are in place.",
       cta: "Finish upload",
     };
   }
@@ -90,7 +94,8 @@ function getAssignmentState(assignment) {
   return {
     badge: "group_ready",
     title: "Your group is ready",
-    description: "Open the assignment, upload your work, and move through the confirmation steps.",
+    description:
+      "Open the assignment, upload your work, and move through the confirmation steps.",
     cta: "Open workspace",
   };
 }
@@ -99,7 +104,6 @@ export default function StudentAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  usePageReady(!loading);
 
   const cardsRef = useStagger({
     selector: "[data-assignment-card]",
@@ -127,10 +131,16 @@ export default function StudentAssignments() {
   const stats = useMemo(() => {
     const dueSoon = assignments.filter((assignment) => {
       const daysUntil = getDaysUntil(assignment.due_date);
-      return daysUntil >= 0 && daysUntil <= 7 && assignment.my_submission?.status !== "submitted";
+      return (
+        daysUntil >= 0 &&
+        daysUntil <= 7 &&
+        assignment.my_submission?.status !== "submitted"
+      );
     }).length;
 
-    const grouped = assignments.filter((assignment) => assignment.my_group).length;
+    const grouped = assignments.filter(
+      (assignment) => assignment.my_group,
+    ).length;
     const submitted = assignments.filter(
       (assignment) => assignment.my_submission?.status === "submitted",
     ).length;
@@ -179,13 +189,17 @@ export default function StudentAssignments() {
           description="Once your professor posts work, it will show up here with group and submission guidance."
         />
       ) : (
-        <div ref={cardsRef} className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5">
+        <div
+          ref={cardsRef}
+          className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5"
+        >
           {assignments.map((assignment) => {
             const state = getAssignmentState(assignment);
             const isPastDue = new Date(assignment.due_date) < new Date();
             const daysUntil = getDaysUntil(assignment.due_date);
             const memberCount = assignment.my_group?.member_count || 0;
-            const submittedMembers = assignment.my_group?.submitted_members || 0;
+            const submittedMembers =
+              assignment.my_group?.submitted_members || 0;
 
             return (
               <article
@@ -198,13 +212,16 @@ export default function StudentAssignments() {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         <StatusBadge status={state.badge} />
-                        {isPastDue ? <span className="badge-danger">Past due</span> : null}
+                        {isPastDue ? (
+                          <span className="badge-danger">Past due</span>
+                        ) : null}
                       </div>
                       <h2 className="text-section text-text-primary leading-tight">
                         {assignment.title}
                       </h2>
                       <p className="text-body text-text-secondary mt-2">
-                        {assignment.description || "Open the assignment to review the instructions and submission steps."}
+                        {assignment.description ||
+                          "Open the assignment to review the instructions and submission steps."}
                       </p>
                     </div>
 
@@ -235,7 +252,9 @@ export default function StudentAssignments() {
                         <p className="text-body font-semibold text-text-primary mt-2">
                           {dateFmt.format(new Date(assignment.due_date))}
                         </p>
-                        <p className={`text-label mt-1 ${isPastDue ? "text-semantic-danger" : "text-text-tertiary"}`}>
+                        <p
+                          className={`text-label mt-1 ${isPastDue ? "text-semantic-danger" : "text-text-tertiary"}`}
+                        >
                           {isPastDue
                             ? `${Math.abs(daysUntil)} day${Math.abs(daysUntil) === 1 ? "" : "s"} late`
                             : daysUntil === 0
@@ -269,15 +288,20 @@ export default function StudentAssignments() {
                       {assignment.my_group ? (
                         <>
                           <div className="mt-3">
-                            <ProgressBar value={submittedMembers} max={Math.max(memberCount, 1)} />
+                            <ProgressBar
+                              value={submittedMembers}
+                              max={Math.max(memberCount, 1)}
+                            />
                           </div>
                           <p className="text-meta text-text-secondary mt-2">
-                            {submittedMembers} of {memberCount} members have completed their submission steps.
+                            {submittedMembers} of {memberCount} members have
+                            completed their submission steps.
                           </p>
                         </>
                       ) : (
                         <p className="text-meta text-text-secondary mt-3">
-                          Once you form a group, this card tracks who has uploaded and confirmed.
+                          Once you form a group, this card tracks who has
+                          uploaded and confirmed.
                         </p>
                       )}
                     </div>

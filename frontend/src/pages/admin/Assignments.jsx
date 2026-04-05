@@ -17,7 +17,6 @@ import {
   StatCard,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
-import { usePageReady } from "@/context/InitialLoadContext";
 import { useStagger } from "@/hooks/useGsap";
 import { adminApi } from "@/services/api";
 
@@ -35,7 +34,9 @@ const FILTERS = [
 
 function getSubmissionRate(assignment) {
   if (!assignment.total_submissions) return 0;
-  return Math.round((assignment.submitted_count / assignment.total_submissions) * 100);
+  return Math.round(
+    (assignment.submitted_count / assignment.total_submissions) * 100,
+  );
 }
 
 export default function AdminAssignments() {
@@ -46,7 +47,6 @@ export default function AdminAssignments() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
-  usePageReady(!loading);
 
   const cardsRef = useStagger({
     selector: "[data-assignment-card]",
@@ -145,7 +145,10 @@ export default function AdminAssignments() {
 
   if (loading) {
     return (
-      <PageShell title="Assignments" subtitle="Loading your professor workspace">
+      <PageShell
+        title="Assignments"
+        subtitle="Loading your professor workspace"
+      >
         <div className="flex justify-center py-24">
           <Spinner />
         </div>
@@ -166,7 +169,10 @@ export default function AdminAssignments() {
       title="Assignments"
       subtitle="Create, review, and track assignment readiness in one place."
       action={
-        <Link to="/admin/assignments/new" className="btn-primary w-full sm:w-auto">
+        <Link
+          to="/admin/assignments/new"
+          className="btn-primary w-full sm:w-auto"
+        >
           <Plus size={16} aria-hidden="true" />
           New assignment
         </Link>
@@ -208,7 +214,11 @@ export default function AdminAssignments() {
                 key={item.id}
                 type="button"
                 onClick={() => setFilter(item.id)}
-                className={filter === item.id ? "btn-primary btn-sm" : "btn-secondary btn-sm"}
+                className={
+                  filter === item.id
+                    ? "btn-primary btn-sm"
+                    : "btn-secondary btn-sm"
+                }
               >
                 {item.label}
               </button>
@@ -240,7 +250,10 @@ export default function AdminAssignments() {
           />
         )
       ) : (
-        <div ref={cardsRef} className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5">
+        <div
+          ref={cardsRef}
+          className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5"
+        >
           {filteredAssignments.map((assignment) => {
             const dueDate = new Date(assignment.due_date);
             const isPastDue = dueDate < new Date();
@@ -256,7 +269,9 @@ export default function AdminAssignments() {
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <span className={`badge ${isPastDue ? "badge-danger" : "badge-neutral"}`}>
+                        <span
+                          className={`badge ${isPastDue ? "badge-danger" : "badge-neutral"}`}
+                        >
                           {isPastDue ? "Past due" : "Active"}
                         </span>
                         <span className="badge badge-neutral">
@@ -267,12 +282,15 @@ export default function AdminAssignments() {
                         {assignment.title}
                       </h2>
                       <p className="text-body text-text-secondary mt-2">
-                        {assignment.description || "No extra instructions yet. Open the assignment to refine the brief."}
+                        {assignment.description ||
+                          "No extra instructions yet. Open the assignment to refine the brief."}
                       </p>
                     </div>
 
                     <button
-                      onClick={() => navigate(`/admin/assignments/${assignment.id}/edit`)}
+                      onClick={() =>
+                        navigate(`/admin/assignments/${assignment.id}/edit`)
+                      }
                       className="btn-primary btn-sm shrink-0"
                     >
                       <Pencil size={14} aria-hidden="true" />
@@ -290,7 +308,9 @@ export default function AdminAssignments() {
                         {dateFmt.format(dueDate)}
                       </p>
                       <p className="text-meta text-text-secondary mt-1">
-                        {isPastDue ? "Deadline has passed" : "Still accepting work"}
+                        {isPastDue
+                          ? "Deadline has passed"
+                          : "Still accepting work"}
                       </p>
                     </div>
 
@@ -312,7 +332,8 @@ export default function AdminAssignments() {
                         Submissions
                       </p>
                       <p className="text-body font-semibold text-text-primary mt-2">
-                        {assignment.submitted_count}/{assignment.total_submissions}
+                        {assignment.submitted_count}/
+                        {assignment.total_submissions}
                       </p>
                       <p className="text-meta text-text-secondary mt-1">
                         Confirmed uploads
@@ -327,7 +348,8 @@ export default function AdminAssignments() {
                           Submission progress
                         </p>
                         <p className="text-meta text-text-secondary mt-1">
-                          A quick read on how close this assignment is to completion.
+                          A quick read on how close this assignment is to
+                          completion.
                         </p>
                       </div>
                       <span className="text-label text-text-tertiary">
@@ -344,7 +366,9 @@ export default function AdminAssignments() {
 
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => navigate(`/admin/assignments/${assignment.id}/edit`)}
+                      onClick={() =>
+                        navigate(`/admin/assignments/${assignment.id}/edit`)
+                      }
                       className="btn-secondary btn-sm"
                     >
                       <Pencil size={14} aria-hidden="true" />

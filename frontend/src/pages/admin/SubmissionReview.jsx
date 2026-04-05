@@ -8,7 +8,6 @@ import ErrorBanner from "@/components/common/ErrorBanner";
 import Modal from "@/components/common/Modal";
 import { getSubmissions, bulkPublishGrades } from "@/services/api";
 import { timeAgo } from "@/utils/time";
-import { usePageReady } from "@/context/InitialLoadContext";
 
 const FILTERS = [
   { id: "all", label: "All work" },
@@ -33,7 +32,6 @@ export default function SubmissionReview() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState("");
-  usePageReady(!isLoading);
 
   const fetchSubmissions = useCallback(async () => {
     if (!assignmentId) {
@@ -369,7 +367,8 @@ export default function SubmissionReview() {
                               : ""}
                           </p>
                           <p className="text-label text-text-tertiary">
-                            {submission.submittedMembers}/{submission.memberCount} members submitted
+                            {submission.submittedMembers}/
+                            {submission.memberCount} members submitted
                           </p>
                         </div>
                       </div>

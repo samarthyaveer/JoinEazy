@@ -11,7 +11,6 @@ import {
   ProgressBar,
 } from "@/components/common/UIComponents";
 import ErrorBanner from "@/components/common/ErrorBanner";
-import { usePageReady } from "@/context/InitialLoadContext";
 import { useStagger } from "@/hooks/useGsap";
 import { studentApi } from "@/services/api";
 
@@ -25,7 +24,6 @@ export default function MyGroups() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  usePageReady(!loading);
 
   const cardsRef = useStagger({
     selector: "[data-group-card]",
@@ -85,7 +83,10 @@ export default function MyGroups() {
           }
         />
       ) : (
-        <div ref={cardsRef} className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5">
+        <div
+          ref={cardsRef}
+          className="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-5"
+        >
           {groups.map((group) => (
             <article
               key={group.id}
@@ -103,7 +104,9 @@ export default function MyGroups() {
                         {group.my_role}
                       </span>
                     </div>
-                    <h2 className="text-section text-text-primary">{group.name}</h2>
+                    <h2 className="text-section text-text-primary">
+                      {group.name}
+                    </h2>
                     <p className="text-body text-text-secondary mt-2">
                       {group.assignment_title}
                     </p>
@@ -152,7 +155,9 @@ export default function MyGroups() {
                       {group.my_role}
                     </p>
                     <p className="text-meta text-text-secondary mt-1">
-                      {group.my_role === "leader" ? "You can manage members." : "Follow the group updates."}
+                      {group.my_role === "leader"
+                        ? "You can manage members."
+                        : "Follow the group updates."}
                     </p>
                   </div>
                 </div>
@@ -172,7 +177,10 @@ export default function MyGroups() {
                     </span>
                   </div>
                   <div className="mt-4">
-                    <ProgressBar value={group.member_count} max={Math.max(group.max_group_size, 1)} />
+                    <ProgressBar
+                      value={group.member_count}
+                      max={Math.max(group.max_group_size, 1)}
+                    />
                   </div>
                 </div>
               </div>

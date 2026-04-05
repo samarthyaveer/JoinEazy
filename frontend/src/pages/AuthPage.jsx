@@ -1,7 +1,6 @@
 import { useState, useRef, useLayoutEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { usePageReady } from "@/context/InitialLoadContext";
 import { useTheme } from "@/context/ThemeContext";
 import { gsap, prefersReducedMotion, DURATION, EASE } from "@/lib/gsapConfig";
 import { useMagnetic } from "@/hooks/useGsap";
@@ -9,7 +8,6 @@ import { useMagnetic } from "@/hooks/useGsap";
 export default function AuthPage() {
   const { login, register: registerUser } = useAuth();
   const { theme } = useTheme();
-  usePageReady(true);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isRegister, setIsRegister] = useState(

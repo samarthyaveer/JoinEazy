@@ -4,29 +4,6 @@ const CX = 100;
 const CY = 100;
 const CR = 82;
 
-const STATUSES = [
-  [0, "Initializing..."],
-  [15, "Loading assets..."],
-  [35, "Fetching data..."],
-  [55, "Building components..."],
-  [75, "Almost there..."],
-  [90, "Finishing up..."],
-  [100, "Ready!"],
-];
-
-function clampProgress(value) {
-  const numeric = Number.isFinite(value) ? value : 0;
-  return Math.max(0, Math.min(100, numeric));
-}
-
-function getStatus(pct) {
-  let label = STATUSES[0][1];
-  for (const [threshold, text] of STATUSES) {
-    if (pct >= threshold) label = text;
-  }
-  return label;
-}
-
 function buildWave(pct, offset, amplitude) {
   const waterY = CY + CR - (pct / 100) * (CR * 2);
   const minX = CX - CR - 14;
@@ -44,50 +21,28 @@ function buildWave(pct, offset, amplitude) {
   return d;
 }
 
-export default function BubbleLoader({ progress = 0 }) {
+export default function BubbleLoader() {
   const svgRefs = useRef({});
-  const waveOff = useRef({ a: 0, b: 0, c: 0 });
-  const pctRef = useRef(0);
+  const stateRef = useRef({ a: 0, b: 0, c: 0, fill: 20, dir: 1 });
   const rafRef = useRef(null);
-  const labelRef = useRef(null);
-  const statusRef = useRef(null);
-
-  useEffect(() => {
-    const next = clampProgress(progress);
-    pctRef.current = Math.max(pctRef.current, next);
-  }, [progress]);
 
   useEffect(() => {
     const loop = () => {
-      waveOff.current.a += 9.2;
-      waveOff.current.b += 7.4;
-      waveOff.current.c += 11.1;
+      const s = stateRef.current;
+      s.a += 5.5;
+      s.b += 3.8;
+      s.c += 6.8;
 
-      const p = pctRef.current;
-      const amp = p > 2 && p < 98 ? 8 : 1;
+      s.fill += s.dir * 0.04;
+      if (s.fill > 70) s.dir = -1;
+      if (s.fill < 25) s.dir = 1;
 
+      const amp = 7;
       const { fill, foam1, foam2 } = svgRefs.current;
       if (fill) {
-        fill.setAttribute("d", buildWave(p, waveOff.current.a, amp));
-        foam1.setAttribute(
-          "d",
-          buildWave(p, waveOff.current.b + 60, amp * 0.65),
-        );
-        foam2.setAttribute(
-          "d",
-          buildWave(p, waveOff.current.c + 120, amp * 0.45),
-        );
-      }
-
-      const rounded = Math.round(p);
-      if (labelRef.current) {
-        labelRef.current.textContent = `${rounded}%`;
-        labelRef.current.style.color = rounded > 45 ? "#fff" : "#185FA5";
-        labelRef.current.style.textShadow =
-          rounded > 45 ? "0 1px 6px rgba(24,95,165,0.4)" : "none";
-      }
-      if (statusRef.current) {
-        statusRef.current.textContent = getStatus(rounded);
+        fill.setAttribute("d", buildWave(s.fill, s.a, amp));
+        foam1.setAttribute("d", buildWave(s.fill, s.b + 60, amp * 0.65));
+        foam2.setAttribute("d", buildWave(s.fill, s.c + 120, amp * 0.45));
       }
 
       rafRef.current = requestAnimationFrame(loop);
@@ -148,42 +103,30 @@ export default function BubbleLoader({ progress = 0 }) {
             strokeWidth="2.5"
             opacity="0.6"
           />
-
           <circle cx="78" cy="62" r="6" fill="white" opacity="0.22" />
           <circle cx="68" cy="74" r="3.5" fill="white" opacity="0.14" />
         </svg>
-
-        <div
-          ref={labelRef}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            fontSize: 30,
-            fontWeight: 500,
-            color: "#185FA5",
-            pointerEvents: "none",
-            fontFamily: "var(--font-sans)",
-            transition: "color 0.4s",
-          }}
-        >
-          0%
-        </div>
       </div>
 
       <p
-        ref={statusRef}
         style={{
           fontSize: 14,
-          color: "var(--color-text-secondary)",
+          color: "#4a7aad",
           fontFamily: "var(--font-sans)",
           margin: 0,
-          letterSpacing: "0.02em",
+          letterSpacing: "0.06em",
+          animation: "bubblePulse 1.8s ease-in-out infinite",
         }}
       >
-        Initializing...
+        LOADING
       </p>
+
+      <style>{`
+        @keyframes bubblePulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   );
 }

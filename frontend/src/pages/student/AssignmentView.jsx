@@ -15,7 +15,6 @@ import {
   ProgressBar,
 } from "@/components/common/UIComponents";
 import { studentApi } from "@/services/api";
-import { usePageReady } from "@/context/InitialLoadContext";
 
 const STATUS_ORDER = [
   "pending",
@@ -42,13 +41,17 @@ function MessageBanner({ type = "info", text }) {
   if (!text) return null;
 
   const styles = {
-    error: "border-semantic-danger/20 bg-semantic-danger/6 text-semantic-danger",
-    success: "border-semantic-success/20 bg-semantic-success/8 text-semantic-success",
+    error:
+      "border-semantic-danger/20 bg-semantic-danger/6 text-semantic-danger",
+    success:
+      "border-semantic-success/20 bg-semantic-success/8 text-semantic-success",
     info: "border-border bg-surface-overlay/80 text-text-secondary",
   };
 
   return (
-    <div className={`rounded-2xl border px-4 py-3 text-meta ${styles[type] || styles.info}`}>
+    <div
+      className={`rounded-2xl border px-4 py-3 text-meta ${styles[type] || styles.info}`}
+    >
       {text}
     </div>
   );
@@ -64,12 +67,15 @@ function WorkflowStep({
   disabled,
   tone = "primary",
 }) {
-  const buttonClass = tone === "secondary" ? "btn-secondary btn-sm" : "btn-primary btn-sm";
+  const buttonClass =
+    tone === "secondary" ? "btn-secondary btn-sm" : "btn-primary btn-sm";
 
   return (
     <div
       className={`rounded-[24px] border p-4 sm:p-5 ${
-        done ? "border-accent/20 bg-accent/6" : "border-border bg-surface-raised/78"
+        done
+          ? "border-accent/20 bg-accent/6"
+          : "border-border bg-surface-raised/78"
       }`}
     >
       <div className="flex items-start gap-4">
@@ -80,7 +86,11 @@ function WorkflowStep({
               : "bg-surface-overlay text-text-tertiary border border-border"
           }`}
         >
-          {done ? <CheckCircle2 size={18} aria-hidden="true" /> : <span className="text-meta font-semibold">{step}</span>}
+          {done ? (
+            <CheckCircle2 size={18} aria-hidden="true" />
+          ) : (
+            <span className="text-meta font-semibold">{step}</span>
+          )}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -106,7 +116,6 @@ export default function AssignmentView() {
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
-  usePageReady(!loading);
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupName, setGroupName] = useState("");
@@ -123,23 +132,28 @@ export default function AssignmentView() {
   const [submitting, setSubmitting] = useState(false);
   const [subMsg, setSubMsg] = useState({ type: "", text: "" });
 
-  const loadAssignment = useCallback(async ({ showPageError = true } = {}) => {
-    try {
-      if (showPageError) {
-        setPageError("");
+  const loadAssignment = useCallback(
+    async ({ showPageError = true } = {}) => {
+      try {
+        if (showPageError) {
+          setPageError("");
+        }
+        const { data } = await studentApi.getAssignmentById(id);
+        setAssignment(data.assignment);
+        return data.assignment;
+      } catch (err) {
+        if (showPageError) {
+          setPageError(
+            err.message || "Couldn't load assignment. Refresh and try again.",
+          );
+        }
+        return null;
+      } finally {
+        setLoading(false);
       }
-      const { data } = await studentApi.getAssignmentById(id);
-      setAssignment(data.assignment);
-      return data.assignment;
-    } catch (err) {
-      if (showPageError) {
-        setPageError(err.message || "Couldn't load assignment. Refresh and try again.");
-      }
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+    },
+    [id],
+  );
 
   useEffect(() => {
     loadAssignment();
@@ -148,10 +162,15 @@ export default function AssignmentView() {
   const myGroup = assignment?.my_group;
   const submission = assignment?.my_submission;
   const groupMembers = assignment?.my_group_members || [];
-  const isPastDue = assignment ? new Date(assignment.due_date) < new Date() : false;
-  const groupIsFull = groupMembers.length >= Number(assignment?.max_group_size || 0);
+  const isPastDue = assignment
+    ? new Date(assignment.due_date) < new Date()
+    : false;
+  const groupIsFull =
+    groupMembers.length >= Number(assignment?.max_group_size || 0);
   const submittedMembers = useMemo(
-    () => groupMembers.filter((member) => member.submission_status === "submitted").length,
+    () =>
+      groupMembers.filter((member) => member.submission_status === "submitted")
+        .length,
     [groupMembers],
   );
 
@@ -174,7 +193,10 @@ export default function AssignmentView() {
       await studentApi.createGroup(id, { name: groupName });
       setShowCreateGroup(false);
       setGroupName("");
-      setGroupNotice({ type: "success", text: "Group created. You can now invite teammates and start submitting." });
+      setGroupNotice({
+        type: "success",
+        text: "Group created. You can now invite teammates and start submitting.",
+      });
       await loadAssignment({ showPageError: false });
     } catch (err) {
       setGroupNotice({
@@ -201,7 +223,9 @@ export default function AssignmentView() {
     } catch (err) {
       setMemberMsg({
         type: "error",
-        text: err.message || "Couldn't add that member. Check the email and try again.",
+        text:
+          err.message ||
+          "Couldn't add that member. Check the email and try again.",
       });
     } finally {
       setAddingMember(false);
@@ -234,7 +258,9 @@ export default function AssignmentView() {
       window.open(assignment.onedrive_link, "_blank", "noopener,noreferrer");
       setSubMsg({
         type: "info",
-        text: err.message || "The folder opened, but the click wasn't recorded cleanly. You can continue and mark the upload when ready.",
+        text:
+          err.message ||
+          "The folder opened, but the click wasn't recorded cleanly. You can continue and mark the upload when ready.",
       });
     }
   };
@@ -267,12 +293,17 @@ export default function AssignmentView() {
       });
       setShowConfirm(false);
       setConfirmTitle("");
-      setSubMsg({ type: "success", text: "Your submission has been confirmed." });
+      setSubMsg({
+        type: "success",
+        text: "Your submission has been confirmed.",
+      });
       await loadAssignment({ showPageError: false });
     } catch (err) {
       setSubMsg({
         type: "error",
-        text: err.message || "Couldn't confirm the submission. Check the title and try again.",
+        text:
+          err.message ||
+          "Couldn't confirm the submission. Check the title and try again.",
       });
     } finally {
       setSubmitting(false);
@@ -281,7 +312,10 @@ export default function AssignmentView() {
 
   if (loading) {
     return (
-      <PageShell title="Assignment workspace" subtitle="Loading instructions and group status">
+      <PageShell
+        title="Assignment workspace"
+        subtitle="Loading instructions and group status"
+      >
         <div className="flex justify-center py-24">
           <Spinner />
         </div>
@@ -291,8 +325,14 @@ export default function AssignmentView() {
 
   if (pageError || !assignment) {
     return (
-      <PageShell title="Assignment workspace" subtitle="Everything for this assignment lives here">
-        <ErrorBanner message={pageError || "Assignment missing"} onRetry={loadAssignment} />
+      <PageShell
+        title="Assignment workspace"
+        subtitle="Everything for this assignment lives here"
+      >
+        <ErrorBanner
+          message={pageError || "Assignment missing"}
+          onRetry={loadAssignment}
+        />
       </PageShell>
     );
   }
@@ -319,10 +359,13 @@ export default function AssignmentView() {
                           : submission?.my_submission_status || "group_ready"
                     }
                   />
-                  {isPastDue ? <span className="badge-danger">Past due</span> : null}
+                  {isPastDue ? (
+                    <span className="badge-danger">Past due</span>
+                  ) : null}
                 </div>
                 <p className="text-body text-text-secondary whitespace-pre-wrap">
-                  {assignment.description || "Open the submission folder, upload your work, and confirm the assignment title to finish."}
+                  {assignment.description ||
+                    "Open the submission folder, upload your work, and confirm the assignment title to finish."}
                 </p>
               </div>
 
@@ -331,7 +374,9 @@ export default function AssignmentView() {
                   <CalendarClock size={14} aria-hidden="true" />
                   Deadline
                 </div>
-                <p className={`text-body font-semibold mt-2 ${isPastDue ? "text-semantic-danger" : "text-text-primary"}`}>
+                <p
+                  className={`text-body font-semibold mt-2 ${isPastDue ? "text-semantic-danger" : "text-text-primary"}`}
+                >
                   {dateTimeFmt.format(new Date(assignment.due_date))}
                 </p>
                 <p className="text-meta text-text-secondary mt-1">
@@ -349,22 +394,38 @@ export default function AssignmentView() {
                     <ShieldCheck size={14} aria-hidden="true" />
                     Start by creating your team
                   </div>
-                  <h2 className="text-section text-text-primary">No group yet</h2>
+                  <h2 className="text-section text-text-primary">
+                    No group yet
+                  </h2>
                   <p className="text-body text-text-secondary mt-2">
-                    Create a group, invite teammates, and the upload workflow becomes available immediately. You only need a group name to begin.
+                    Create a group, invite teammates, and the upload workflow
+                    becomes available immediately. You only need a group name to
+                    begin.
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5">
                     <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
-                      <p className="text-label uppercase tracking-widest text-text-tertiary">Step 1</p>
-                      <p className="text-meta text-text-primary mt-2">Create the group</p>
+                      <p className="text-label uppercase tracking-widest text-text-tertiary">
+                        Step 1
+                      </p>
+                      <p className="text-meta text-text-primary mt-2">
+                        Create the group
+                      </p>
                     </div>
                     <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4">
-                      <p className="text-label uppercase tracking-widest text-text-tertiary">Step 2</p>
-                      <p className="text-meta text-text-primary mt-2">Invite teammates</p>
+                      <p className="text-label uppercase tracking-widest text-text-tertiary">
+                        Step 2
+                      </p>
+                      <p className="text-meta text-text-primary mt-2">
+                        Invite teammates
+                      </p>
                     </div>
                     <div className="rounded-[22px] border border-border bg-surface-raised/78 p-4 col-span-2 sm:col-span-1">
-                      <p className="text-label uppercase tracking-widest text-text-tertiary">Step 3</p>
-                      <p className="text-meta text-text-primary mt-2">Upload and confirm</p>
+                      <p className="text-label uppercase tracking-widest text-text-tertiary">
+                        Step 3
+                      </p>
+                      <p className="text-meta text-text-primary mt-2">
+                        Upload and confirm
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -376,7 +437,10 @@ export default function AssignmentView() {
                   >
                     Create group
                   </button>
-                  <MessageBanner type={groupNotice.type} text={groupNotice.text} />
+                  <MessageBanner
+                    type={groupNotice.type}
+                    text={groupNotice.text}
+                  />
                 </div>
               </div>
             </section>
@@ -386,9 +450,12 @@ export default function AssignmentView() {
             <section className="card p-4 sm:p-5 lg:p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
                 <div>
-                  <h2 className="text-section text-text-primary">Submission flow</h2>
+                  <h2 className="text-section text-text-primary">
+                    Submission flow
+                  </h2>
                   <p className="text-body text-text-secondary mt-2">
-                    Follow the steps in order so your upload is recorded cleanly for the whole group.
+                    Follow the steps in order so your upload is recorded cleanly
+                    for the whole group.
                   </p>
                 </div>
                 <div className="rounded-[22px] border border-border bg-surface-overlay/70 px-4 py-3">
@@ -403,7 +470,7 @@ export default function AssignmentView() {
 
               {submission.status === "submitted" ? (
                 <div className="space-y-5">
-                <div className="rounded-[24px] border border-semantic-success/20 bg-semantic-success/8 p-4 sm:p-5">
+                  <div className="rounded-[24px] border border-semantic-success/20 bg-semantic-success/8 p-4 sm:p-5">
                     <div className="flex items-start gap-3">
                       <CheckCircle2
                         size={20}
@@ -438,7 +505,8 @@ export default function AssignmentView() {
                           </span>
                         </div>
                         <p className="text-meta text-text-secondary mt-3 whitespace-pre-wrap">
-                          {submission.grade_feedback || "Your instructor did not leave score notes yet."}
+                          {submission.grade_feedback ||
+                            "Your instructor did not leave score notes yet."}
                         </p>
                       </div>
                     ) : (
@@ -461,7 +529,8 @@ export default function AssignmentView() {
                             {submission.my_evaluation_status}
                           </span>
                           <p className="text-meta text-text-secondary mt-3 whitespace-pre-wrap">
-                            {submission.my_feedback || "No individual notes yet."}
+                            {submission.my_feedback ||
+                              "No individual notes yet."}
                           </p>
                         </div>
                       ) : (
@@ -501,7 +570,8 @@ export default function AssignmentView() {
                       Your part is complete
                     </p>
                     <p className="text-meta text-text-secondary mt-1">
-                      You have confirmed the upload. The group submission finalizes when every teammate finishes.
+                      You have confirmed the upload. The group submission
+                      finalizes when every teammate finishes.
                     </p>
                   </div>
                   <MessageBanner type={subMsg.type} text={subMsg.text} />
@@ -515,7 +585,9 @@ export default function AssignmentView() {
                     done={isStepDone(1)}
                     action={handleTrackClick}
                     actionLabel={
-                      isStepDone(1) ? "Open folder again" : "Open OneDrive folder"
+                      isStepDone(1)
+                        ? "Open folder again"
+                        : "Open OneDrive folder"
                     }
                   />
 
@@ -627,7 +699,10 @@ export default function AssignmentView() {
               </div>
 
               {myGroup.my_role === "leader" ? (
-                <form onSubmit={handleAddMember} className="pt-5 mt-5 border-t border-border">
+                <form
+                  onSubmit={handleAddMember}
+                  className="pt-5 mt-5 border-t border-border"
+                >
                   <label
                     className="block text-label uppercase tracking-widest text-text-tertiary mb-2"
                     htmlFor="add-member-email"
@@ -644,7 +719,9 @@ export default function AssignmentView() {
                       className="input-field flex-1 text-meta"
                       placeholder="name@example.com"
                       value={addEmail}
-                      onChange={(event) => setAddEmail(event.target.value.toLowerCase())}
+                      onChange={(event) =>
+                        setAddEmail(event.target.value.toLowerCase())
+                      }
                       required
                       disabled={groupIsFull}
                     />
@@ -653,7 +730,11 @@ export default function AssignmentView() {
                       className="btn-primary btn-sm"
                       disabled={addingMember || groupIsFull}
                     >
-                      {groupIsFull ? "Group full" : addingMember ? "Adding..." : "Add member"}
+                      {groupIsFull
+                        ? "Group full"
+                        : addingMember
+                          ? "Adding..."
+                          : "Add member"}
                     </button>
                   </div>
                   <p className="text-label text-text-tertiary mt-2">
@@ -683,7 +764,9 @@ export default function AssignmentView() {
                 <dt className="text-label uppercase tracking-widest text-text-tertiary">
                   Due
                 </dt>
-                <dd className={`text-body font-semibold mt-2 ${isPastDue ? "text-semantic-danger" : "text-text-primary"}`}>
+                <dd
+                  className={`text-body font-semibold mt-2 ${isPastDue ? "text-semantic-danger" : "text-text-primary"}`}
+                >
                   {dateTimeFmt.format(new Date(assignment.due_date))}
                 </dd>
               </div>

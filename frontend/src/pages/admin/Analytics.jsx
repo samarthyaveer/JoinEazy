@@ -30,7 +30,6 @@ import {
   Spinner,
 } from "@/components/common/UIComponents";
 import { adminApi } from "@/services/api";
-import { usePageReady } from "@/context/InitialLoadContext";
 
 // ─── Chart theme ───────────────────────────────────────────────────────────────
 const TOOLTIP_STYLE = {
@@ -66,7 +65,8 @@ function GroupRow({ group, onEvaluate }) {
         : "red";
 
   const evalBadgeClass =
-    group.evaluation_status === "accepted" || group.evaluation_status === "graded"
+    group.evaluation_status === "accepted" ||
+    group.evaluation_status === "graded"
       ? "badge-success"
       : group.evaluation_status === "rejected"
         ? "badge-danger"
@@ -109,7 +109,8 @@ function GroupRow({ group, onEvaluate }) {
       {expanded &&
         group.members?.map((m) => {
           const memberBadge =
-            m.evaluation_status === "accepted" || m.evaluation_status === "graded"
+            m.evaluation_status === "accepted" ||
+            m.evaluation_status === "graded"
               ? "badge-success"
               : m.evaluation_status === "rejected"
                 ? "badge-danger"
@@ -190,14 +191,13 @@ function SubmissionChart({ stats }) {
     () =>
       stats.map((s) => ({
         ...s,
-        shortTitle:
-          s.title.length > 18 ? `${s.title.slice(0, 16)}…` : s.title,
+        shortTitle: s.title.length > 18 ? `${s.title.slice(0, 16)}…` : s.title,
         rate:
           s.total_groups > 0
             ? Math.round((s.submitted_count / s.total_groups) * 100)
             : 0,
       })),
-    [stats]
+    [stats],
   );
 
   return (
@@ -261,8 +261,16 @@ function CompletionRateMini({ stats }) {
   }, [stats]);
 
   const pieData = [
-    { name: "Submitted", value: overall, fill: "rgb(var(--color-semantic-success))" },
-    { name: "Pending", value: 100 - overall, fill: "rgb(var(--color-text-tertiary) / 0.2)" },
+    {
+      name: "Submitted",
+      value: overall,
+      fill: "rgb(var(--color-semantic-success))",
+    },
+    {
+      name: "Pending",
+      value: 100 - overall,
+      fill: "rgb(var(--color-text-tertiary) / 0.2)",
+    },
   ];
 
   return (
@@ -294,7 +302,9 @@ function CompletionRateMini({ stats }) {
       <p className="text-3xl font-bold text-text-primary tabular-nums -mt-6">
         {overall}%
       </p>
-      <p className="text-label text-text-tertiary mt-1">across all assignments</p>
+      <p className="text-label text-text-tertiary mt-1">
+        across all assignments
+      </p>
     </div>
   );
 }
@@ -321,7 +331,6 @@ export default function Analytics() {
   const [error, setError] = useState(null);
   const [evalModal, setEvalModal] = useState(INITIAL_MODAL);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  usePageReady(!loading);
 
   useEffect(() => {
     async function load() {
@@ -368,7 +377,7 @@ export default function Analytics() {
     setEvalModal((p) => ({ ...p, submitting: true, error: "" }));
     try {
       await adminApi.reviewSubmission(evalModal.submissionId, {
-        evaluationStatus: evalModal.status,   // ← correct field name
+        evaluationStatus: evalModal.status, // ← correct field name
         feedback: evalModal.feedback,
         ...(evalModal.userId ? { userId: evalModal.userId } : {}),
       });
@@ -410,12 +419,11 @@ export default function Analytics() {
     const { assignment, groups = [], ungroupedStudents = [] } = analytics;
     const totalGroups = groups.length;
     const submittedGroups = groups.filter(
-      (g) => g.submission_status === "submitted"
+      (g) => g.submission_status === "submitted",
     ).length;
     const gradedGroups = groups.filter(
       (g) =>
-        g.evaluation_status === "accepted" ||
-        g.evaluation_status === "graded"
+        g.evaluation_status === "accepted" || g.evaluation_status === "graded",
     ).length;
 
     return (
@@ -544,7 +552,11 @@ export default function Analytics() {
         )}
 
         {/* Evaluation modal */}
-        <Modal isOpen={evalModal.isOpen} onClose={closeModal} title="Review submission">
+        <Modal
+          isOpen={evalModal.isOpen}
+          onClose={closeModal}
+          title="Review submission"
+        >
           <form onSubmit={submitEvaluation} className="space-y-5">
             <div>
               <p className="text-label text-text-tertiary uppercase tracking-widest mb-1">
@@ -613,7 +625,11 @@ export default function Analytics() {
             )}
 
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={closeModal} className="btn-secondary">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="btn-secondary"
+              >
                 Cancel
               </button>
               <button
@@ -680,14 +696,10 @@ export default function Analytics() {
                       <td className="px-5 py-4 text-body font-medium text-text-primary">
                         {s.title}
                       </td>
-                      <td
-                        className="px-5 py-4 font-mono text-meta text-text-secondary tabular-nums"
-                      >
+                      <td className="px-5 py-4 font-mono text-meta text-text-secondary tabular-nums">
                         {s.total_groups}
                       </td>
-                      <td
-                        className="px-5 py-4 font-mono text-meta text-text-secondary tabular-nums"
-                      >
+                      <td className="px-5 py-4 font-mono text-meta text-text-secondary tabular-nums">
                         {s.submitted_count}
                       </td>
                       <td className="px-5 py-4">

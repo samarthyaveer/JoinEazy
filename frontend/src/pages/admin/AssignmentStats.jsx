@@ -21,7 +21,6 @@ import ErrorBanner from "@/components/common/ErrorBanner";
 import EmptyState from "@/components/common/EmptyState";
 import { getAssignmentStats } from "@/services/api";
 import { gradeLetterFromPercent, percentFromScore } from "@/utils/grade";
-import { usePageReady } from "@/context/InitialLoadContext";
 
 // ─── Chart theme ───────────────────────────────────────────────────────────────
 const TOOLTIP_STYLE = {
@@ -55,9 +54,7 @@ function StatCard({ label, value, sub, accent }) {
       >
         {value}
       </p>
-      {sub && (
-        <p className="text-label text-text-tertiary mt-2">{sub}</p>
-      )}
+      {sub && <p className="text-label text-text-tertiary mt-2">{sub}</p>}
     </div>
   );
 }
@@ -169,7 +166,7 @@ function GradeDistributionPie({ submissions, totalMarks }) {
     submissions.forEach((s) => {
       const pct = percentFromScore(
         typeof s.totalScore === "number" ? s.totalScore : 0,
-        s.totalMarks || totalMarks
+        s.totalMarks || totalMarks,
       );
       counts[gradeLetterFromPercent(pct)] =
         (counts[gradeLetterFromPercent(pct)] || 0) + 1;
@@ -213,7 +210,10 @@ function GradeDistributionPie({ submissions, totalMarks }) {
               iconType="circle"
               iconSize={8}
               formatter={(value) => `Grade ${value}`}
-              wrapperStyle={{ fontSize: 11, color: "rgb(var(--color-text-tertiary))" }}
+              wrapperStyle={{
+                fontSize: 11,
+                color: "rgb(var(--color-text-tertiary))",
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -237,9 +237,7 @@ function LateSubmissionPie({ submissions }) {
 
   return (
     <div className="card p-5">
-      <h3 className="text-section text-text-primary mb-5">
-        On-time vs late
-      </h3>
+      <h3 className="text-section text-text-primary mb-5">On-time vs late</h3>
       <div style={{ height: 180 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -282,16 +280,14 @@ function QuestionAccuracyChart({ questions }) {
           typeof q.avgScore === "number" ? Number(q.avgScore.toFixed(1)) : 0,
         maxMarks: q.maxMarks,
       })),
-    [questions]
+    [questions],
   );
 
   if (!data.length) return null;
 
   return (
     <div className="card p-5">
-      <h3 className="text-section text-text-primary mb-1">
-        Question accuracy
-      </h3>
+      <h3 className="text-section text-text-primary mb-1">Question accuracy</h3>
       <p className="text-label text-text-tertiary mb-5">
         % of students who answered correctly
       </p>
@@ -363,7 +359,6 @@ export default function AssignmentStats() {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  usePageReady(!isLoading);
 
   const fetchStats = useCallback(async () => {
     if (!assignmentId) {
@@ -425,8 +420,17 @@ export default function AssignmentStats() {
               ? "text-semantic-warning"
               : "text-semantic-danger",
       },
-      { label: "Highest score", value: highestScore, accent: "text-semantic-success" },
-      { label: "Lowest score", value: lowestScore, accent: lowestScore < totalMarks * 0.4 ? "text-semantic-danger" : undefined },
+      {
+        label: "Highest score",
+        value: highestScore,
+        accent: "text-semantic-success",
+      },
+      {
+        label: "Lowest score",
+        value: lowestScore,
+        accent:
+          lowestScore < totalMarks * 0.4 ? "text-semantic-danger" : undefined,
+      },
     ];
   }, [stats, totalMarks]);
 
@@ -538,7 +542,7 @@ export default function AssignmentStats() {
             <>
               <ScoreHistogram
                 scores={submissions.map((s) =>
-                  typeof s.totalScore === "number" ? s.totalScore : 0
+                  typeof s.totalScore === "number" ? s.totalScore : 0,
                 )}
                 totalMarks={totalMarks}
                 averageScore={stats.averageScore ?? 0}
@@ -584,7 +588,8 @@ export default function AssignmentStats() {
                     const score =
                       typeof s.totalScore === "number" ? s.totalScore : null;
                     const marks = s.totalMarks || totalMarks;
-                    const pct = score !== null ? percentFromScore(score, marks) : null;
+                    const pct =
+                      score !== null ? percentFromScore(score, marks) : null;
                     const grade =
                       pct !== null ? gradeLetterFromPercent(pct) : null;
                     return (
@@ -625,7 +630,7 @@ export default function AssignmentStats() {
                           {s.submitted_at
                             ? new Date(s.submitted_at).toLocaleDateString(
                                 "en-IN",
-                                { day: "numeric", month: "short" }
+                                { day: "numeric", month: "short" },
                               )
                             : "—"}
                         </td>

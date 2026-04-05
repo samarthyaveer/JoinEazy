@@ -8,8 +8,11 @@ import ActivityFeed from "@/components/admin/ActivityFeed";
 import QuickGradeCard from "@/components/admin/QuickGradeCard";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorBanner from "@/components/common/ErrorBanner";
-import { usePageReady } from "@/context/InitialLoadContext";
-import { adminApi, getActivityFeed, getPendingReviewCount } from "@/services/api";
+import {
+  adminApi,
+  getActivityFeed,
+  getPendingReviewCount,
+} from "@/services/api";
 
 const dateFmt = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
@@ -61,7 +64,6 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [activityError, setActivityError] = useState(null);
-  usePageReady(!loading);
 
   // ── Dashboard data ──────────────────────────────────────────────────────────
   const loadDashboard = useCallback(async () => {
@@ -99,7 +101,7 @@ export default function AdminDashboard() {
         assignments.filter((a) => {
           const due = new Date(a.due_date).getTime();
           return due >= now && due <= now + weekMs;
-        }).length
+        }).length,
       );
     } catch (err) {
       setError(err.message || "Couldn't load dashboard.");
@@ -205,7 +207,9 @@ export default function AdminDashboard() {
             <MetricCard
               label="Due this week"
               value={dueThisWeek}
-              sublabel={dueThisWeek === 0 ? "Nothing closing soon" : "Closing soon"}
+              sublabel={
+                dueThisWeek === 0 ? "Nothing closing soon" : "Closing soon"
+              }
             />
           </div>
 
@@ -270,7 +274,7 @@ export default function AdminDashboard() {
                       const rate =
                         a.total_submissions > 0
                           ? Math.round(
-                              (a.submitted_count / a.total_submissions) * 100
+                              (a.submitted_count / a.total_submissions) * 100,
                             )
                           : 0;
                       return (
